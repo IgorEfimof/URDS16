@@ -1,0 +1,4199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon14.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="URDS16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Улучшенный Рапидо Старт с LSTM</title>
+    <!-- Загрузка TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <!-- Загрузка Chart.js для визуализации -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Обновленные стили с новыми элементами */
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1c1c1e;
+            --card-bg: white;
+            --border-color: #ddd;
+            --primary-color: #0066cc;
+            --secondary-color: #ff2d55;
+            --keyboard-bg: #e5e5ea;
+            --button-active: #004499;
+            --history-border: #eee;
+            --selected-color: #34c759;
+            --special-color: #af52de;
+            --win-color: #30d158;
+            --lose-color: #ff453a;
+            --hot-color: #ff9500;
+            --cold-color: #0a84ff;
+            --lstm-color: #00bcd4;
+            --hybrid-color: #4CAF50;
+            --pattern-color: #FF4081;
+            --ai-color: #9C27B0;
+        }
+
+        .dark-mode {
+            --bg-color: #1c1c1e;
+            --text-color: #f5f5f7;
+            --card-bg: #2c2c2e;
+            --border-color: #444;
+            --primary-color: #0a84ff;
+            --secondary-color: #ff375f;
+            --keyboard-bg: #3a3a3c;
+            --button-active: #0061c8;
+            --history-border: #444;
+            --selected-color: #30d158;
+            --special-color: #bf5af2;
+            --win-color: #30d158;
+            --lose-color: #ff453a;
+            --hot-color: #ff9f0a;
+            --cold-color: #5ac8fa;
+            --lstm-color: #00b8d4;
+            --hybrid-color: #66BB6A;
+            --pattern-color: #FF6B9D;
+            --ai-color: #BA68C8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            max-width: 100%;
+            margin: 0 auto;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding-bottom: 20px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        h3 {
+            color: var(--primary-color);
+            font-size: 1rem;
+            margin: 10px 0 5px;
+        }
+        .numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .number {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 15px;
+            transition: transform 0.2s;
+        }
+        .number.selected {
+            background: var(--selected-color);
+            transform: scale(1.1);
+        }
+        .number.small {
+            background: var(--secondary-color);
+            width: 36px;
+        }
+        .number.special {
+            background: var(--special-color);
+        }
+        .number.lstm {
+            background: var(--lstm-color);
+        }
+        .number.hybrid {
+            background: var(--hybrid-color);
+        }
+        .number.pattern {
+            background: var(--pattern-color);
+        }
+        .number.ai {
+            background: var(--ai-color);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button:active {
+            background: var(--button-active);
+        }
+        button.secondary {
+            background: var(--keyboard-bg);
+            color: var(--text-color);
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid var(--history-border);
+        }
+        .hot {
+            color: var(--hot-color);
+            font-weight: bold;
+        }
+        .cold {
+            color: var(--cold-color);
+            font-weight: bold;
+        }
+        .history-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--history-border);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item button {
+            width: auto;
+            padding: 2px 8px;
+            margin: 0;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .validation-error {
+            color: var(--secondary-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        .method-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .method-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px;
+            text-align: center;
+            background: var(--keyboard-bg);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .method-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            margin-left: 5px;
+            cursor: help;
+        }
+        .win-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 120px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .win {
+            color: var(--win-color);
+        }
+        .lose {
+            color: var(--lose-color);
+        }
+        .method-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 5px;
+            background: var(--card-bg);
+        }
+        .tag-cold { background: var(--cold-color); color: white; }
+        .tag-ogneva { background: var(--special-color); color: white; }
+        .tag-karnaugh { background: #ff9500; color: white; }
+        .tag-uniform { background: #4CAF50; color: white; }
+        .tag-lstm { background: var(--lstm-color); color: white; }
+        .tag-hybrid { background: var(--hybrid-color); color: white; }
+        .tag-pattern { background: var(--pattern-color); color: white; }
+        .tag-ai { background: var(--ai-color); color: white; }
+        .frequency-bar {
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        .frequency-fill {
+            height: 100%;
+            background: var(--primary-color);
+        }
+        .draw-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .draw-input {
+            flex: 1;
+        }
+        .draw-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .draw-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .prize-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .prize-table th, .prize-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .prize-table th {
+            background-color: rgba(0,102,204,0.1);
+        }
+        .jackpot {
+            background-color: rgba(255,215,0,0.2);
+            font-weight: bold;
+        }
+        .training-status {
+            padding: 8px;
+            margin-top: 10px;
+            border-radius: 8px;
+            background: #e0f7fa;
+            color: #006064;
+            font-size: 14px;
+            display: none;
+        }
+        .dark-mode .training-status {
+            background: #004d40;
+            color: #e0f2f1;
+        }
+        .training-progress {
+            height: 8px;
+            background: #b2ebf2;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        .dark-mode .training-progress {
+            background: #00796b;
+        }
+        .training-progress-bar {
+            height: 100%;
+            background: #0097a7;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .dark-mode .training-progress-bar {
+            background: #00bcd4;
+        }
+        .model-info {
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .train-btn {
+            margin-top: 10px;
+            background: var(--lstm-color) !important;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 15px;
+        }
+        .heatmap-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 15px;
+            position: relative;
+        }
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+        }
+        .heatmap-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: white;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .tab {
+            padding: 8px 12px;
+            background: var(--keyboard-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .info-box {
+            padding: 10px;
+            background: rgba(0,102,204,0.1);
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .dark-mode .info-box {
+            background: rgba(10, 132, 255, 0.1);
+        }
+        .prediction-charts {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .prediction-chart-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+        }
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+        .dark-mode .debug-info {
+            background: #333;
+            color: #ccc;
+        }
+        .prediction-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .prediction-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: var(--lstm-color);
+            color: white;
+        }
+        .prediction-value {
+            font-size: 10px;
+            margin-top: 2px;
+            text-align: center;
+        }
+        
+        /* Инструкция */
+        .instruction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .instruction-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            cursor: pointer;
+            width: auto;
+            padding: 5px;
+            margin: 0;
+        }
+
+        .instruction-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .instruction-step {
+            margin-bottom: 20px;
+        }
+
+        .instruction-step h3 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .instruction-step ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .instruction-step li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .instruction-step p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .instruction-tip {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .dark-mode .instruction-tip {
+            background: rgba(255, 193, 7, 0.2);
+        }
+        
+        /* Новая матрица чисел для ввода */
+        .number-input-section {
+            margin-top: 15px;
+        }
+        
+        .number-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .number-input-header h3 {
+            margin: 0;
+        }
+        
+        .selection-info {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+        
+        .number-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .number-item {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--keyboard-bg);
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .number-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .number-item.selected {
+            background: var(--selected-color);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3);
+        }
+        
+        .number-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .small-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .selected-numbers-display {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            min-height: 50px;
+        }
+        
+        .selected-number {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 2px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .clear-selection {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 10px;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .input-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .input-controls button {
+            flex: 1;
+        }
+        
+        .auto-fill-btn {
+            background: var(--special-color) !important;
+        }
+        
+        .quick-select-buttons {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .quick-select-btn {
+            flex: 1;
+            padding: 6px;
+            background: var(--keyboard-bg);
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 80px;
+        }
+        
+        .quick-select-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* Новые стили для вкладки паттернов */
+        .pattern-analysis {
+            margin-top: 15px;
+        }
+        
+        .pattern-item {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .pattern-name {
+            font-weight: bold;
+            color: var(--pattern-color);
+            margin-bottom: 5px;
+        }
+        
+        .pattern-description {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        
+        .pattern-confidence {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .confidence-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--keyboard-bg);
+            border-radius: 3px;
+            margin-right: 10px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: var(--pattern-color);
+            border-radius: 3px;
+        }
+        
+        .confidence-value {
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 40px;
+        }
+        
+        .pattern-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .pattern-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background: var(--pattern-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .pattern-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .stat-key {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+        }
+        
+        .pattern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .pattern-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .pattern-btn {
+            padding: 6px 12px;
+            background: var(--pattern-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .pattern-btn.secondary {
+            background: var(--keyboard-bg);
+            color: var(--text-color);
+        }
+        
+        .ai-recommendation {
+            background: rgba(156, 39, 176, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--ai-color);
+        }
+        
+        .dark-mode .ai-recommendation {
+            background: rgba(156, 39, 176, 0.2);
+        }
+        
+        .ai-title {
+            color: var(--ai-color);
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ai-title:before {
+            content: "🤖";
+            margin-right: 8px;
+        }
+        
+        .ai-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .ai-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background: var(--ai-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .ai-confidence {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .auto-fill-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .auto-fill-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .auto-fill-buttons button {
+            flex: 1;
+        }
+        
+        .pattern-details {
+            margin-top: 15px;
+        }
+        
+        .pattern-history {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        /* Новые стили для индикаторов */
+        .confidence-indicator {
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .confidence-meter {
+            margin-top: 10px;
+        }
+        
+        .meter-bar {
+            height: 10px;
+            background: var(--keyboard-bg);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff9900, #33cc33);
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        
+        .confidence-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .streak-indicator {
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        
+        .streak-hot {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+        
+        .streak-cold {
+            background: rgba(0, 188, 212, 0.1);
+            border-left: 4px solid #00bcd4;
+        }
+        
+        .streak-neutral {
+            background: rgba(158, 158, 158, 0.1);
+            border-left: 4px solid #9e9e9e;
+        }
+        
+        .smart-generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .method-recommendation {
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid #4CAF50;
+            font-size: 13px;
+        }
+        
+        .dark-mode .method-recommendation {
+            background: rgba(76, 175, 80, 0.2);
+        }
+        
+        .risk-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .risk-low {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .risk-medium {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .risk-high {
+            background: #F44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    
+    <div class="container">
+        <div class="card">
+            <h1>Улучшенный Рапидо Старт с LSTM</h1>
+            <p class="subtitle">Гибридный анализ с нейросетевым прогнозированием</p>
+        </div>
+        
+        <!-- Индикатор уверенности модели -->
+        <div class="card" id="confidenceIndicator" style="display: none;">
+            <h2>📊 Интеллектуальный анализ</h2>
+            <div class="confidence-indicator">
+                <div class="pattern-stat">
+                    <span class="stat-key">Уверенность модели:</span>
+                    <span class="stat-value" id="modelConfidenceValue">0%</span>
+                </div>
+                <div class="confidence-meter">
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="modelConfidenceFill" style="width: 0%"></div>
+                    </div>
+                    <div class="confidence-labels">
+                        <span>Низкая</span>
+                        <span>Средняя</span>
+                        <span>Высокая</span>
+                    </div>
+                </div>
+                <div id="streakIndicator" class="streak-indicator streak-neutral">
+                    Анализируем данные...
+                </div>
+                <div id="methodRecommendation" class="method-recommendation" style="display: none;">
+                    Рекомендуемый метод: <strong id="recommendedMethod">Гибридный</strong>
+                    <span id="riskLevel" class="risk-indicator risk-medium">Средний риск</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Инструкция -->
+        <div class="card">
+            <div class="instruction-header">
+                <h2>📋 Инструкция</h2>
+                <button id="toggleInstruction" class="instruction-toggle">▼</button>
+            </div>
+            <div id="instructionContent" class="instruction-content" style="display: none;">
+                <div class="instruction-step">
+                    <h3>1. Сгенерировать числа</h3>
+                    <p>Выберите метод генерации и нажмите "Сгенерировать":</p>
+                    <ul>
+                        <li><strong>Холодные</strong> - числа, которые редко выпадали</li>
+                        <li><strong>Огнева</strong> - числа вокруг среднего значения</li>
+                        <li><strong>Карнауха</strong> - комбинация холодных, средних и горячих чисел</li>
+                        <li><strong>Равномерный</strong> - равномерное распределение по диапазонам</li>
+                        <li><strong>LSTM</strong> - прогноз с помощью нейросети</li>
+                        <li><strong>Гибридный</strong> - комбинация холодных чисел и LSTM</li>
+                        <li><strong>Паттерны</strong> - анализ логических последовательностей</li>
+                        <li><strong>ИИ Анализ</strong> - интеллектуальный анализ паттернов</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>2. Добавить результат розыгрыша</h3>
+                    <p>После реального розыгрыша введите его результат:</p>
+                    <ul>
+                        <li>Номер тиража заполняется автоматически</li>
+                        <li>В матрице чисел выберите 8 чисел для поля 1</li>
+                        <li>В матрице чисел выберите 1 число для поля 2</li>
+                        <li>Нажмите "Добавить результат"</li>
+                    </ul>
+                    <p>Программа автоматически проверит вашу ставку и рассчитает выигрыш.</p>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>3. Анализ статистики</h3>
+                    <p>Используйте вкладки аналитики для изучения данных:</p>
+                    <ul>
+                        <li><strong>Эффективность</strong> - ROI и процент выигрышей по методам</li>
+                        <li><strong>Тепловая карта</strong> - совместная встречаемость чисел</li>
+                        <li><strong>Прогнозы</strong> - предсказания LSTM модели</li>
+                        <li><strong>Паттерны</strong> - логические последовательности и тренды</li>
+                        <li><strong>ИИ Анализ</strong> - интеллектуальные рекомендации</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>4. Обучение модели</h3>
+                    <p>Для работы LSTM модели нужно:</p>
+                    <ul>
+                        <li>Минимум 15 записей в истории</li>
+                        <li>Нажмите "Обучить модель" для обучения</li>
+                        <li>Модель автоматически обучается при добавлении новых данных</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>5. Интеллектуальный анализ</h3>
+                    <p>Программа анализирует:</p>
+                    <ul>
+                        <li><strong>Серии выигрышей/проигрышей</strong> - определяет благоприятные периоды</li>
+                        <li><strong>Уверенность модели</strong> - показывает, насколько надежен прогноз</li>
+                        <li><strong>Риск ставки</strong> - оценивает вероятность выигрыша</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>Таблица выигрышей Рапидо</h3>
+                    <table class="prize-table">
+                        <tr><th>Совпадения</th><th>Выигрыш</th></tr>
+                        <tr><td>8 + 1</td><td class="jackpot">Суперприз (5 000 000 ₽)</td></tr>
+                        <tr><td>8 + 0</td><td>25 000 ₽</td></tr>
+                        <tr><td>7 + 1</td><td>5 000 ₽</td></tr>
+                        <tr><td>7 + 0</td><td>1 000 ₽</td></tr>
+                        <tr><td>6 + 1</td><td>175 ₽</td></tr>
+                        <tr><td>6 + 0</td><td>150 ₽</td></tr>
+                        <tr><td>5 + 1</td><td>100 ₽</td></tr>
+                        <tr><td>5 + 0</td><td>50 ₽</td></tr>
+                        <tr><td>4 + 1</td><td>25 ₽</td></tr>
+                    </table>
+                </div>
+                
+                <div class="instruction-tip">
+                    <p><strong>💡 Совет:</strong> Для лучших результатов используйте ИИ Анализ и регулярно обновляйте историю розыгрышей. Анализ паттернов работает лучше всего при наличии 20+ записей в истории.</p>
+                    <p><strong>⚠️ Важно:</strong> Генерируйте числа только когда индикатор показывает "Высокая вероятность выигрыша".</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Сгенерировать числа</h2>
+            <div class="method-selector">
+                <div class="method-btn" data-method="cold">Холодные</div>
+                <div class="method-btn" data-method="ogneva">Огнева</div>
+                <div class="method-btn" data-method="karnaugh">Карнауха</div>
+                <div class="method-btn" data-method="uniform">Равномерный</div>
+                <div class="method-btn" data-method="lstm">LSTM</div>
+                <div class="method-btn" data-method="patterns">Паттерны</div>
+                <div class="method-btn" data-method="ai">ИИ Анализ</div>
+                <div class="method-btn active" data-method="hybrid">Гибридный</div>
+                <div class="method-btn" data-method="smart">Умная генерация</div>
+            </div>
+            
+            <div id="trainingStatus" class="training-status">
+                <div>Статус модели: <span id="trainingMessage">Загрузка...</span></div>
+                <div class="training-progress">
+                    <div id="trainingProgress" class="training-progress-bar"></div>
+                </div>
+                <div class="model-info">Точность: <span id="modelAccuracy">0%</span></div>
+                <div class="model-info">Тиражей: <span id="modelDataSize">0</span></div>
+                <button id="trainModelBtn" class="train-btn">Обучить модель</button>
+            </div>
+            
+            <p>Поле 1 (8 из 20):</p>
+            <div class="numbers" id="field1"></div>
+            <p>Поле 2 (1 из 4):</p>
+            <div class="numbers" id="field2"></div>
+            <button id="genBtn" class="smart-generate-btn">Умная генерация</button>
+            <button id="genBtnBasic" class="secondary">Обычная генерация</button>
+        </div>
+        
+                <div class="card">
+            <h2>Добавить историю розыгрыша</h2>
+            
+            <div class="draw-inputs">
+                <div class="draw-input">
+                    <label>Номер тиража</label>
+                    <input type="number" id="drawId" class="input-field" placeholder="Введите номер тиража">
+                </div>
+            </div>
+            
+            <!-- Поле 1: 8 из 20 -->
+            <div class="number-input-section">
+                <div class="number-input-header">
+                    <h3>Поле 1: Выберите 8 чисел от 1 до 20</h3>
+                    <div class="selection-info" id="field1Count">Выбрано: 0/8</div>
+                </div>
+                
+                <div class="quick-select-buttons">
+                    <button class="quick-select-btn" data-action="clear1">Очистить</button>
+                    <button class="quick-select-btn" data-action="hot1">Горячие</button>
+                    <button class="quick-select-btn" data-action="cold1">Холодные</button>
+                    <button class="quick-select-btn" data-action="patternFill1">По паттернам</button>
+                    <button class="quick-select-btn auto-fill-btn" data-action="aiFill1">ИИ Заполнение</button>
+                </div>
+                
+                <div class="number-matrix" id="field1Matrix">
+                    <!-- Числа 1-20 будут сгенерированы скриптом -->
+                </div>
+                
+                <div class="selected-numbers-display" id="field1Selected">
+                    Выбранные числа: <span id="field1NumbersList">нет</span>
+                    <span class="clear-selection" id="clearField1">×</span>
+                </div>
+            </div>
+            
+            <!-- Поле 2: 1 из 4 -->
+            <div class="number-input-section">
+                <div class="number-input-header">
+                    <h3>Поле 2: Выберите 1 число от 1 до 4</h3>
+                    <div class="selection-info" id="field2Count">Выбрано: 0/1</div>
+                </div>
+                
+                <div class="quick-select-buttons">
+                    <button class="quick-select-btn" data-action="clear2">Очистить</button>
+                    <button class="quick-select-btn" data-action="patternFill2">По паттернам</button>
+                    <button class="quick-select-btn auto-fill-btn" data-action="aiFill2">ИИ Заполнение</button>
+                </div>
+                
+                <div class="small-matrix" id="field2Matrix">
+                    <!-- Числа 1-4 будут сгенерированы скриптом -->
+                </div>
+                
+                <div class="selected-numbers-display" id="field2Selected">
+                    Выбранное число: <span id="field2NumbersList">нет</span>
+                    <span class="clear-selection" id="clearField2">×</span>
+                </div>
+            </div>
+            
+            <div id="validationError" class="validation-error"></div>
+            
+            <div class="input-controls">
+                <button id="addHistoryBtn">Добавить результат</button>
+                <button id="clearAllBtn" class="secondary">Очистить все</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Статистика чисел</h2>
+            <table class="stats-table" id="statsTable"></table>
+        </div>
+        
+        <div class="card">
+            <h2>Статистика выигрышей</h2>
+            <div class="win-stats" id="winStats"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Аналитика и визуализация</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="efficiency">Эффективность</div>
+                <div class="tab" data-tab="heatmap">Тепловая карта</div>
+                <div class="tab" data-tab="predictions">Прогнозы LSTM</div>
+                <div class="tab" data-tab="patterns">Анализ паттернов</div>
+                <div class="tab" data-tab="aiAnalysis">ИИ Анализ</div>
+            </div>
+            
+            <div class="tab-content active" id="efficiencyTab">
+                <canvas id="efficiencyChart" class="chart-container"></canvas>
+                <div class="info-box">
+                    Этот график показывает эффективность каждого метода генерации чисел по соотношению выигрышей к потраченным средствам.
+                </div>
+            </div>
+            
+            <div class="tab-content" id="heatmapTab">
+                <div class="heatmap-container">
+                    <div class="heatmap-grid" id="heatmapGrid"></div>
+                </div>
+                <div class="info-box">
+                    Тепловая карта показывает совместную встречаемость чисел в выигрышных комбинациях. Чем темнее ячейка, тем чаще эти числа выпадают вместе.
+                </div>
+            </div>
+            
+            <div class="tab-content" id="predictionsTab">
+                <div class="debug-info" id="debugInfo">
+                    Информация об отладке будет отображаться здесь
+                </div>
+                <div class="prediction-charts">
+                    <div class="prediction-chart-container">
+                        <canvas id="field1PredictionChart"></canvas>
+                    </div>
+                    <div class="prediction-numbers" id="field1PredictionNumbers"></div>
+                    
+                    <div class="prediction-chart-container">
+                        <canvas id="field2PredictionChart"></canvas>
+                    </div>
+                    <div class="prediction-numbers" id="field2PredictionNumbers"></div>
+                </div>
+                <div class="info-box">
+                    Прогноз вероятности выпадения чисел в следующем тираже на основе LSTM модели.
+                </div>
+            </div>
+            
+            <div class="tab-content" id="patternsTab">
+                <div class="pattern-header">
+                    <h3>Анализ логических паттернов</h3>
+                    <div class="pattern-controls">
+                        <button id="refreshPatternsBtn" class="pattern-btn">Обновить</button>
+                        <button id="applyPatternsBtn" class="pattern-btn secondary">Применить лучший</button>
+                    </div>
+                </div>
+                
+                <div class="pattern-details">
+                    <div class="pattern-stat">
+                        <span class="stat-key">Анализируется тиражей:</span>
+                        <span class="stat-value" id="analyzedDraws">0</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Выявлено паттернов:</span>
+                        <span class="stat-value" id="patternsCount">0</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Точность лучшего паттерна:</span>
+                        <span class="stat-value" id="bestPatternAccuracy">0%</span>
+                    </div>
+                </div>
+                
+                <div id="patternsList" class="pattern-analysis">
+                    <!-- Паттерны будут отображаться здесь -->
+                </div>
+                
+                <div class="info-box">
+                    Анализ выявляет логические последовательности в последних тиражах и предсказывает следующие числа на основе выявленных паттернов.
+                </div>
+            </div>
+            
+            <div class="tab-content" id="aiAnalysisTab">
+                <div class="ai-recommendation" id="aiRecommendation">
+                    <div class="ai-title">ИИ Рекомендация</div>
+                    <p>Для получения интеллектуальных рекомендаций необходимо минимум 10 записей в истории.</p>
+                    <div id="aiRecommendationContent"></div>
+                </div>
+                
+                <div class="pattern-analysis">
+                    <div class="pattern-item">
+                        <div class="pattern-name">Алгоритм анализа паттернов</div>
+                        <div class="pattern-description">
+                            Система анализирует последние 5-10 тиражей и выявляет следующие паттерны:
+                        </div>
+                        <ul style="font-size: 12px; margin-left: 20px; margin-bottom: 10px;">
+                            <li>Последовательности чисел (арифметические прогрессии)</li>
+                            <li>Сезонные тренды (повторяющиеся комбинации)</li>
+                            <li>Кластерные группы (числа, выпадающие вместе)</li>
+                            <li>Интервальные паттерны (расстояния между числами)</li>
+                            <li>Циклические повторения</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div id="aiPatternsList" class="pattern-analysis">
+                    <!-- ИИ паттерны будут отображаться здесь -->
+                </div>
+                
+                <div class="info-box">
+                    ИИ анализ использует машинное обучение для выявления сложных паттернов и предоставляет интеллектуальные рекомендации на основе всех доступных данных.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>История розыгрышей</h2>
+            <div id="historyList"></div>
+            <button id="clearHistoryBtn" class="secondary">Очистить историю</button>
+        </div>
+    </div>
+        
+    </div>
+<script>
+    // --- Тема ---
+    const themeToggle = document.getElementById('themeToggle');
+    function applyTheme(dark) {
+        if(dark) {
+            document.documentElement.classList.add('dark-mode');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            localStorage.setItem('darkMode', 'false');
+        }
+    }
+    themeToggle.onclick = () => {
+        const dark = document.documentElement.classList.contains('dark-mode');
+        applyTheme(!dark);
+        updateCharts();
+        renderHeatmap();
+        updatePredictionCharts();
+        updatePatternsAnalysis();
+        updateAIAnalysis();
+        updateConfidenceIndicator();
+    };
+    applyTheme(localStorage.getItem('darkMode') === 'true');
+
+    // --- История розыгрышей и ставок ---
+    let history = JSON.parse(localStorage.getItem('rapidoHistory') || '[]');
+    let bets = JSON.parse(localStorage.getItem('rapidoBets') || '[]');
+    
+    // Статистика выигрышей
+    let winStats = JSON.parse(localStorage.getItem('rapidoWinStats') || JSON.stringify({
+        cold: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        ogneva: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        karnaugh: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        uniform: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        lstm: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        hybrid: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        patterns: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        ai: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+        smart: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 }
+    }));
+    
+    if (typeof winStats === 'string') {
+        winStats = JSON.parse(winStats);
+    }
+
+    // Таблица выигрышей
+    const prizeTable = {
+        '8,1': { amount: 5000000, label: 'Суперприз' },
+        '8,0': { amount: 25000, label: '25 000 ₽' },
+        '7,1': { amount: 5000, label: '5 000 ₽' },
+        '7,0': { amount: 1000, label: '1 000 ₽' },
+        '6,1': { amount: 175, label: '175 ₽' },
+        '6,0': { amount: 150, label: '150 ₽' },
+        '5,1': { amount: 100, label: '100 ₽' },
+        '5,0': { amount: 50, label: '50 ₽' },
+        '4,1': { amount: 25, label: '25 ₽' }
+    };
+
+    // Сохраняем ставки
+    function saveBets() {
+        localStorage.setItem('rapidoBets', JSON.stringify(bets));
+    }
+
+    // Сохраняем статистику
+    function saveWinStats() {
+        localStorage.setItem('rapidoWinStats', JSON.stringify(winStats));
+    }
+
+    // Сохраняем историю
+    function saveHistory() {
+        localStorage.setItem('rapidoHistory', JSON.stringify(history));
+    }
+
+    // --- Новая система ввода через матрицу чисел ---
+    let selectedField1 = new Set();
+    let selectedField2 = null;
+    
+    // Создание матрицы чисел для поля 1 (1-20)
+    function createField1Matrix() {
+        const matrix = document.getElementById('field1Matrix');
+        if (!matrix) return;
+        matrix.innerHTML = '';
+        
+        for (let i = 1; i <= 20; i++) {
+            const numberItem = document.createElement('div');
+            numberItem.className = 'number-item';
+            numberItem.textContent = i;
+            numberItem.dataset.number = i;
+            
+            if (selectedField1.has(i)) {
+                numberItem.classList.add('selected');
+            }
+            
+            numberItem.addEventListener('click', () => {
+                toggleField1Number(i);
+            });
+            
+            matrix.appendChild(numberItem);
+        }
+        
+        updateField1Display();
+    }
+    
+    // Создание матрицы чисел для поля 2 (1-4)
+    function createField2Matrix() {
+        const matrix = document.getElementById('field2Matrix');
+        if (!matrix) return;
+        matrix.innerHTML = '';
+        
+        for (let i = 1; i <= 4; i++) {
+            const numberItem = document.createElement('div');
+            numberItem.className = 'number-item';
+            numberItem.textContent = i;
+            numberItem.dataset.number = i;
+            
+            if (selectedField2 === i) {
+                numberItem.classList.add('selected');
+            }
+            
+            numberItem.addEventListener('click', () => {
+                selectField2Number(i);
+            });
+            
+            matrix.appendChild(numberItem);
+        }
+        
+        updateField2Display();
+    }
+    
+    // Переключение выбора числа в поле 1
+    function toggleField1Number(number) {
+        if (selectedField1.has(number)) {
+            selectedField1.delete(number);
+        } else {
+            if (selectedField1.size < 8) {
+                selectedField1.add(number);
+            }
+        }
+        
+        createField1Matrix();
+    }
+    
+    // Выбор числа в поле 2
+    function selectField2Number(number) {
+        selectedField2 = number;
+        createField2Matrix();
+    }
+    
+    // Обновление отображения выбранных чисел для поля 1
+    function updateField1Display() {
+        const countElement = document.getElementById('field1Count');
+        const numbersListElement = document.getElementById('field1NumbersList');
+        
+        if (!countElement || !numbersListElement) return;
+        
+        countElement.textContent = `Выбрано: ${selectedField1.size}/8`;
+        
+        if (selectedField1.size > 0) {
+            const numbersArray = Array.from(selectedField1).sort((a, b) => a - b);
+            numbersListElement.innerHTML = numbersArray.map(num => 
+                `<span class="selected-number">${num}</span>`
+            ).join('');
+        } else {
+            numbersListElement.textContent = 'нет';
+        }
+    }
+    
+    // Обновление отображения выбранных чисел для поля 2
+    function updateField2Display() {
+        const countElement = document.getElementById('field2Count');
+        const numbersListElement = document.getElementById('field2NumbersList');
+        
+        if (!countElement || !numbersListElement) return;
+        
+        countElement.textContent = `Выбрано: ${selectedField2 ? 1 : 0}/1`;
+        
+        if (selectedField2) {
+            numbersListElement.innerHTML = `<span class="selected-number">${selectedField2}</span>`;
+        } else {
+            numbersListElement.textContent = 'нет';
+        }
+    }
+    
+    // Автозаполнение поля 1 горячими числами
+    function autoFillHotField1() {
+        if (history.length === 0) return;
+        
+        const countField1 = Array(20).fill(0);
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if (n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+        });
+        
+        // Получаем 8 самых горячих чисел
+        let numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers.sort((a, b) => countField1[b - 1] - countField1[a - 1]);
+        
+        selectedField1 = new Set(numbers.slice(0, 8));
+        createField1Matrix();
+    }
+    
+    // Автозаполнение поля 1 холодными числами
+    function autoFillColdField1() {
+        if (history.length === 0) return;
+        
+        const countField1 = Array(20).fill(0);
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if (n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+        });
+        
+        // Получаем 8 самых холодных чисел
+        let numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers.sort((a, b) => countField1[a - 1] - countField1[b - 1]);
+        
+        selectedField1 = new Set(numbers.slice(0, 8));
+        createField1Matrix();
+    }
+    
+    // Очистка выбора поля 1
+    function clearField1() {
+        selectedField1.clear();
+        createField1Matrix();
+    }
+    
+    // Очистка выбора поля 2
+    function clearField2() {
+        selectedField2 = null;
+        createField2Matrix();
+    }
+    
+    // Очистка всех полей
+    function clearAllFields() {
+        clearField1();
+        clearField2();
+        const drawIdInput = document.getElementById('drawId');
+        if (drawIdInput) drawIdInput.value = '';
+    }
+    
+    // Инициализация матриц чисел
+    function initNumberMatrices() {
+        createField1Matrix();
+        createField2Matrix();
+        
+        // Обработчики для кнопок быстрого выбора
+        document.querySelectorAll('.quick-select-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.dataset.action;
+                
+                switch(action) {
+                    case 'clear1':
+                        clearField1();
+                        break;
+                    case 'hot1':
+                        autoFillHotField1();
+                        break;
+                    case 'cold1':
+                        autoFillColdField1();
+                        break;
+                    case 'patternFill1':
+                        fillByPatternsField1();
+                        break;
+                    case 'aiFill1':
+                        fillByAIField1();
+                        break;
+                    case 'clear2':
+                        clearField2();
+                        break;
+                    case 'patternFill2':
+                        fillByPatternsField2();
+                        break;
+                    case 'aiFill2':
+                        fillByAIField2();
+                        break;
+                }
+            });
+        });
+        
+        // Обработчики для кнопок очистки
+        const clearField1Btn = document.getElementById('clearField1');
+        const clearField2Btn = document.getElementById('clearField2');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        
+        if (clearField1Btn) clearField1Btn.addEventListener('click', clearField1);
+        if (clearField2Btn) clearField2Btn.addEventListener('click', clearField2);
+        if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllFields);
+        
+        // Автозаполнение номера тиража
+        const drawIdInput = document.getElementById('drawId');
+        if (drawIdInput) {
+            drawIdInput.addEventListener('focus', function() {
+                if (!this.value && history.length > 0) {
+                    const lastDrawId = Math.max(...history.map(entry => parseInt(entry.drawId) || 0));
+                    this.value = lastDrawId + 1;
+                }
+            });
+        }
+    }
+    
+    // Заполнение по паттернам для поля 1
+    function fillByPatternsField1() {
+        const patterns = analyzePatterns();
+        if (patterns.length === 0) {
+            alert('Не найдено паттернов для анализа. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Используем лучший паттерн
+        const bestPattern = patterns[0];
+        selectedField1 = new Set(bestPattern.numbers);
+        createField1Matrix();
+    }
+    
+    // Заполнение по паттернам для поля 2
+    function fillByPatternsField2() {
+        const patterns = analyzePatterns();
+        if (patterns.length === 0) {
+            alert('Не найдено паттернов для анализа. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Используем лучший паттерн для поля 2
+        const bestPattern = patterns[0];
+        if (bestPattern.field2Prediction) {
+            selectedField2 = bestPattern.field2Prediction;
+            createField2Matrix();
+        }
+    }
+    
+    // Заполнение по ИИ анализу для поля 1
+    function fillByAIField1() {
+        const aiAnalysis = performAIAnalysis();
+        if (!aiAnalysis || !aiAnalysis.recommendation) {
+            alert('ИИ анализ не может предоставить рекомендации. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        selectedField1 = new Set(aiAnalysis.recommendation.numbers);
+        createField1Matrix();
+    }
+    
+    // Заполнение по ИИ анализу для поля 2
+    function fillByAIField2() {
+        const aiAnalysis = performAIAnalysis();
+        if (!aiAnalysis || !aiAnalysis.recommendation) {
+            alert('ИИ анализ не может предоставить рекомендации. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        selectedField2 = aiAnalysis.recommendation.field2;
+        createField2Matrix();
+    }
+    
+    // --- Анализ уверенности модели и серийностей ---
+    
+    // Расчет уверенности модели на основе энтропии
+    async function getModelConfidence() {
+        const predictions = await getLSTMPredictions();
+        if (!predictions) return 0;
+
+        function entropy(probs) {
+            let e = 0;
+            for (let p of probs) {
+                if (p > 0) {
+                    e -= p * Math.log(p);
+                }
+            }
+            return e;
+        }
+
+        // Нормализуем вероятности поля 1
+        const sum1 = predictions.field1.reduce((a, b) => a + b, 0);
+        if (sum1 === 0) return 0;
+        
+        const normalized1 = predictions.field1.map(p => p / sum1);
+        const maxEntropy1 = Math.log(predictions.field1.length);
+        const entropy1 = entropy(normalized1);
+        const confidence1 = 1 - (entropy1 / maxEntropy1);
+
+        // Нормализуем вероятности поля 2
+        const sum2 = predictions.field2.reduce((a, b) => a + b, 0);
+        if (sum2 === 0) return 0;
+        
+        const normalized2 = predictions.field2.map(p => p / sum2);
+        const maxEntropy2 = Math.log(predictions.field2.length);
+        const entropy2 = entropy(normalized2);
+        const confidence2 = 1 - (entropy2 / maxEntropy2);
+
+        // Общая уверенность - среднее арифметическое
+        const overallConfidence = (confidence1 + confidence2) / 2;
+        
+        // Ограничиваем значения от 0 до 1
+        return Math.max(0, Math.min(1, overallConfidence));
+    }
+    
+    // Анализ серий выигрышей/проигрышей
+    function analyzeHotStreaks() {
+        if (history.length < 5) {
+            return {
+                currentStreak: null,
+                recentStreaks: [],
+                recommendation: "Недостаточно данных для анализа серий",
+                streakType: "neutral",
+                streakLength: 0,
+                winProbability: 0.5
+            };
+        }
+
+        const streaks = [];
+        let currentStreak = { type: null, length: 0, startIndex: 0 };
+
+        // Проходим по истории с конца (последние тиражи)
+        const recentHistory = history.slice(-20); // Анализируем последние 20 тиражей
+        
+        for (let i = recentHistory.length - 1; i >= 0; i--) {
+            const draw = recentHistory[i];
+            const hasWin = draw.winAmount && draw.winAmount > 0;
+
+            if (hasWin) {
+                if (currentStreak.type === 'win') {
+                    currentStreak.length++;
+                } else {
+                    if (currentStreak.type === 'lose') {
+                        streaks.push({...currentStreak});
+                    }
+                    currentStreak = { type: 'win', length: 1, startIndex: i };
+                }
+            } else {
+                if (currentStreak.type === 'lose') {
+                    currentStreak.length++;
+                } else {
+                    if (currentStreak.type === 'win') {
+                        streaks.push({...currentStreak});
+                    }
+                    currentStreak = { type: 'lose', length: 1, startIndex: i };
+                }
+            }
+        }
+
+        // Добавляем текущую серию
+        if (currentStreak.type) {
+            streaks.push({...currentStreak});
+        }
+
+        // Сортируем серии по длине (самые длинные вначале)
+        streaks.sort((a, b) => b.length - a.length);
+
+        let recommendation = "Нет четких паттернов";
+        let streakType = "neutral";
+        let winProbability = 0.5;
+        
+        if (streaks.length > 0) {
+            const longestStreak = streaks[0];
+            
+            if (longestStreak.type === 'lose' && longestStreak.length >= 3) {
+                // Длинная серия проигрышей увеличивает вероятность выигрыша
+                recommendation = "🔥 Высокая вероятность выигрыша - серия проигрышей (" + longestStreak.length + " тиражей)";
+                streakType = "hot";
+                winProbability = Math.min(0.85, 0.5 + (longestStreak.length * 0.1));
+            } else if (longestStreak.type === 'win' && longestStreak.length >= 2) {
+                // Серия выигрышей может прерваться
+                recommendation = "❄️ Будьте осторожны - серия выигрышей (" + longestStreak.length + " тиражей) может прерваться";
+                streakType = "cold";
+                winProbability = Math.max(0.15, 0.5 - (longestStreak.length * 0.1));
+            } else {
+                // Нейтральная ситуация
+                recommendation = "⚖️ Нейтральный период - нет явных паттернов";
+                streakType = "neutral";
+                winProbability = 0.5;
+            }
+        }
+
+        return {
+            currentStreak: streaks[0] || null,
+            recentStreaks: streaks.slice(0, 3),
+            recommendation,
+            streakType,
+            streakLength: streaks.length > 0 ? streaks[0].length : 0,
+            winProbability
+        };
+    }
+    
+    // Обновление индикатора уверенности
+    async function updateConfidenceIndicator() {
+        const indicator = document.getElementById('confidenceIndicator');
+        if (!indicator) return;
+        
+        if (history.length < 10) {
+            indicator.style.display = 'none';
+            return;
+        }
+        
+        indicator.style.display = 'block';
+        
+        const confidence = await getModelConfidence();
+        const confidencePercent = Math.round(confidence * 100);
+        
+        // Обновляем значение уверенности
+        const confidenceValue = document.getElementById('modelConfidenceValue');
+        const confidenceFill = document.getElementById('modelConfidenceFill');
+        
+        if (confidenceValue) confidenceValue.textContent = confidencePercent + '%';
+        if (confidenceFill) confidenceFill.style.width = confidencePercent + '%';
+        
+        // Анализируем серии
+        const streakAnalysis = analyzeHotStreaks();
+        const streakIndicator = document.getElementById('streakIndicator');
+        
+        if (streakIndicator) {
+            streakIndicator.textContent = streakAnalysis.recommendation;
+            streakIndicator.className = 'streak-indicator streak-' + streakAnalysis.streakType;
+        }
+        
+        // Определяем рекомендуемый метод
+        let recommendedMethod = "hybrid";
+        let riskLevel = "medium";
+        let riskClass = "risk-medium";
+        
+        if (confidence > 0.7 && streakAnalysis.streakType === "hot") {
+            recommendedMethod = "lstm";
+            riskLevel = "низкий";
+            riskClass = "risk-low";
+        } else if (confidence > 0.5 && streakAnalysis.streakType === "hot") {
+            recommendedMethod = "hybrid";
+            riskLevel = "средний";
+            riskClass = "risk-medium";
+        } else if (confidence > 0.3) {
+            recommendedMethod = "patterns";
+            riskLevel = "средний";
+            riskClass = "risk-medium";
+        } else {
+            recommendedMethod = "cold";
+            riskLevel = "высокий";
+            riskClass = "risk-high";
+        }
+        
+        // Обновляем рекомендацию
+        const methodRecommendation = document.getElementById('methodRecommendation');
+        const recommendedMethodEl = document.getElementById('recommendedMethod');
+        const riskLevelEl = document.getElementById('riskLevel');
+        
+        if (methodRecommendation && recommendedMethodEl && riskLevelEl) {
+            methodRecommendation.style.display = 'block';
+            
+            let methodName = "";
+            switch(recommendedMethod) {
+                case 'lstm': methodName = "LSTM Прогноз"; break;
+                case 'hybrid': methodName = "Гибридный"; break;
+                case 'patterns': methodName = "Паттерны"; break;
+                case 'ai': methodName = "ИИ Анализ"; break;
+                case 'cold': methodName = "Холодные числа"; break;
+                default: methodName = "Гибридный";
+            }
+            
+            recommendedMethodEl.textContent = methodName;
+            riskLevelEl.textContent = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1) + " риск";
+            riskLevelEl.className = "risk-indicator " + riskClass;
+        }
+        
+        return {
+            confidence,
+            streakAnalysis,
+            recommendedMethod,
+            riskLevel
+        };
+    }
+    
+    // Умная генерация с учетом анализа
+    async function smartGenerate() {
+        // Проверяем историю
+        if (history.length < 15) {
+            alert("⚠️ Мало данных для интеллектуального анализа. Используем холодные числа.");
+            return generateColdNumbers();
+        }
+        
+        // Получаем анализ
+        const analysis = await updateConfidenceIndicator();
+        
+        if (!analysis) {
+            return generateHybridNumbers();
+        }
+        
+        const { confidence, streakAnalysis, recommendedMethod } = analysis;
+        
+        // Определяем, стоит ли генерировать числа
+        let shouldGenerate = false;
+        let message = "";
+        
+        if (confidence > 0.6 && streakAnalysis.streakType === "hot") {
+            shouldGenerate = true;
+            message = "📈 Отличный момент для ставки! Высокая уверенность модели и благоприятная серия.";
+        } else if (confidence > 0.4 && streakAnalysis.streakType !== "cold") {
+            shouldGenerate = true;
+            message = "👍 Хороший момент для ставки. Уверенность модели на приемлемом уровне.";
+        } else if (confidence > 0.3) {
+            shouldGenerate = confirm("🤔 Уверенность модели низкая. Все равно сгенерировать числа?");
+            message = "⚠️ Риск повышенный. Уверенность модели ниже рекомендуемого уровня.";
+        } else {
+            shouldGenerate = confirm("❌ Уверенность модели очень низкая. Сгенерировать числа в любом случае?");
+            message = "🚨 Высокий риск! Уверенность модели очень низкая.";
+        }
+        
+        if (!shouldGenerate) {
+            return null;
+        }
+        
+        // Генерируем числа с учетом рекомендованного метода
+        let generatedNumbers;
+        switch(recommendedMethod) {
+            case 'lstm':
+                generatedNumbers = await generateLSTMNumbers();
+                break;
+            case 'hybrid':
+                generatedNumbers = await generateHybridNumbers();
+                break;
+            case 'patterns':
+                generatedNumbers = await generatePatternNumbers();
+                break;
+            case 'ai':
+                generatedNumbers = await generateAINumbers();
+                break;
+            case 'cold':
+                generatedNumbers = generateColdNumbers();
+                break;
+            default:
+                generatedNumbers = await generateHybridNumbers();
+        }
+        
+        // Показываем сообщение
+        if (message) {
+            alert(message + "\n\nИспользован метод: " + 
+                  (recommendedMethod === 'lstm' ? 'LSTM Прогноз' :
+                   recommendedMethod === 'hybrid' ? 'Гибридный' :
+                   recommendedMethod === 'patterns' ? 'Паттерны' :
+                   recommendedMethod === 'ai' ? 'ИИ Анализ' : 'Холодные числа'));
+        }
+        
+        return generatedNumbers;
+    }
+    
+    // --- Улучшенные методы генерации ---
+    let currentMethod = 'smart';
+    
+    // Переключение методов
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMethod = btn.dataset.method;
+            
+            // Обновляем текст кнопки генерации
+            const genBtn = document.getElementById('genBtn');
+            if (genBtn) {
+                if (currentMethod === 'smart') {
+                    genBtn.textContent = 'Умная генерация';
+                    genBtn.className = 'smart-generate-btn';
+                } else {
+                    genBtn.textContent = 'Сгенерировать (' + btn.textContent + ')';
+                    genBtn.className = '';
+                }
+            }
+        });
+    });
+    
+    // Основная функция генерации чисел
+    async function generateNumbers() {
+        // Получаем следующий номер тиража
+        const lastDrawId = history.length > 0 
+            ? Math.max(...history.map(entry => parseInt(entry.drawId) || 0))
+            : 0;
+        const nextDrawId = lastDrawId + 1;
+        
+        let generatedNumbers;
+        let methodToUse = currentMethod;
+        
+        // Для умной генерации
+        if (currentMethod === 'smart') {
+            generatedNumbers = await smartGenerate();
+            if (!generatedNumbers) {
+                return; // Пользователь отказался от генерации
+            }
+            methodToUse = 'smart';
+        } 
+        // Для методов, требующих асинхронной обработки
+        else if (currentMethod === 'hybrid' || currentMethod === 'lstm' || 
+                 currentMethod === 'patterns' || currentMethod === 'ai') {
+            
+            // Проверяем историю для LSTM
+            if (currentMethod === 'lstm' && history.length < 10) {
+                alert("⚠️ Для LSTM нужно минимум 10 тиражей. Используем гибридный метод.");
+                generatedNumbers = await generateHybridNumbers();
+                methodToUse = 'hybrid';
+            } else {
+                let generationPromise;
+                
+                switch(currentMethod) {
+                    case 'hybrid':
+                        generationPromise = generateHybridNumbers();
+                        break;
+                    case 'lstm':
+                        // Проверяем уверенность модели для LSTM
+                        const confidence = await getModelConfidence();
+                        if (confidence < 0.3) {
+                            const useAnyway = confirm("LSTM модель неуверена (уверенность: " + 
+                                                      Math.round(confidence * 100) + 
+                                                      "%). Все равно использовать LSTM?");
+                            if (!useAnyway) {
+                                generationPromise = generateHybridNumbers();
+                                methodToUse = 'hybrid';
+                                alert("Используем гибридный метод вместо LSTM");
+                            } else {
+                                generationPromise = generateLSTMNumbers();
+                            }
+                        } else {
+                            generationPromise = generateLSTMNumbers();
+                        }
+                        break;
+                    case 'patterns':
+                        generationPromise = generatePatternNumbers();
+                        break;
+                    case 'ai':
+                        generationPromise = generateAINumbers();
+                        break;
+                }
+                
+                generatedNumbers = await generationPromise;
+            }
+        } else {
+            // Для остальных методов - синхронная генерация
+            switch(currentMethod) {
+                case 'ogneva': 
+                    generatedNumbers = generateOgnevaNumbers(); 
+                    break;
+                case 'karnaugh': 
+                    generatedNumbers = generateKarnaughNumbers(); 
+                    break;
+                case 'uniform': 
+                    generatedNumbers = generateUniformNumbers(); 
+                    break;
+                default: 
+                    generatedNumbers = generateColdNumbers();
+            }
+        }
+        
+        if (!generatedNumbers) {
+            alert("Не удалось сгенерировать числа. Попробуйте еще раз.");
+            return;
+        }
+        
+        // Сохраняем ставку
+        const bet = {
+            drawId: nextDrawId.toString(),
+            method: methodToUse,
+            numbers: {
+                field1: [...generatedNumbers.nums1],
+                field2: generatedNumbers.num2
+            },
+            timestamp: new Date().toISOString()
+        };
+        
+        bets.push(bet);
+        saveBets();
+        
+        // Отображаем числа
+        displayNumbers(generatedNumbers.nums1, generatedNumbers.num2, methodToUse);
+        
+        // Увеличиваем счетчик ставки
+        if(winStats[methodToUse]) {
+            winStats[methodToUse].bets++;
+            winStats[methodToUse].spent += 100;
+            winStats[methodToUse].balance = winStats[methodToUse].won - winStats[methodToUse].spent;
+            updateWinStats();
+        }
+        
+        // Автоматически заполняем номер тиража
+        const drawIdInput = document.getElementById('drawId');
+        if (drawIdInput) drawIdInput.value = nextDrawId;
+        
+        // Показываем информацию о методе
+        showGenerationInfo(methodToUse, generatedNumbers);
+    }
+    
+    // Показ информации о генерации
+    function showGenerationInfo(method, numbers) {
+        const methodNames = {
+            'cold': 'Холодные числа',
+            'ogneva': 'Метод Огнева',
+            'karnaugh': 'Метод Карнауха',
+            'uniform': 'Равномерное распределение',
+            'lstm': 'LSTM Прогноз',
+            'hybrid': 'Гибридный метод',
+            'patterns': 'Анализ паттернов',
+            'ai': 'ИИ Анализ',
+            'smart': 'Умная генерация'
+        };
+        
+        let info = `✅ Сгенерировано методом: ${methodNames[method] || method}\n\n`;
+        info += `Поле 1: ${numbers.nums1.join(', ')}\n`;
+        info += `Поле 2: ${numbers.num2}\n\n`;
+        
+        // Добавляем информацию о последних выигрышах
+        if (history.length > 0) {
+            const lastWins = history.filter(h => h.winAmount && h.winAmount > 0).slice(-3);
+            if (lastWins.length > 0) {
+                info += "Последние выигрыши:\n";
+                lastWins.forEach(win => {
+                    info += `Тираж ${win.drawId}: +${win.winAmount} ₽\n`;
+                });
+            }
+        }
+        
+        console.log(info);
+    }
+    
+    // Метод холодных чисел (оптимизированный)
+    function generateColdNumbers() {
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if(entry.field2 >= 1 && entry.field2 <= 4) countField2[entry.field2 - 1]++;
+        });
+
+        if(history.length === 0) {
+            return {
+                nums1: generateRandomNumbers(),
+                num2: Math.floor(Math.random() * 4) + 1
+            };
+        }
+
+        // Выбираем 5 самых редких и 3 среднечастотных числа для первого поля
+        let numbers1 = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers1.sort((a, b) => countField1[a - 1] - countField1[b - 1]);
+        
+        // Берем 5 самых холодных
+        const coldNumbers = numbers1.slice(0, 5);
+        
+        // Берем 3 среднечастотных (из середины списка)
+        const mediumNumbers = numbers1.slice(9, 12);
+        
+        const selected1 = [...coldNumbers, ...mediumNumbers].sort((a, b) => a - b);
+
+        // Для второго поля выбираем самое редкое число
+        let numbers2 = Array.from({ length: 4 }, (_, i) => i + 1);
+        numbers2.sort((a, b) => countField2[a - 1] - countField2[b - 1]);
+        const selected2 = numbers2[0];
+
+        return { nums1: selected1, num2: selected2 };
+    }
+    
+    // Метод Огнева (исправленный)
+    function generateOgnevaNumbers() {
+        if (history.length < 3) {
+            return generateColdNumbers();
+        }
+
+        // Правильный расчет среднего характеристического числа
+        let totalSum = 0;
+        history.forEach(entry => {
+            totalSum += entry.field1.reduce((a, b) => a + b, 0) + entry.field2;
+        });
+        const avg = totalSum / history.length;
+
+        // Генерация чисел в диапазоне среднего значения
+        const center = Math.round(avg / 2);
+        const range = 3;
+
+        let bestCombination = null;
+        let bestDiff = Infinity;
+
+        for (let attempt = 0; attempt < 50; attempt++) {
+            const nums1 = [];
+            let attempts = 0;
+            
+            // Защита от бесконечного цикла
+            while (nums1.length < 8 && attempts < 100) {
+                const base = Math.max(1, Math.min(20, center + Math.floor(Math.random() * (range * 2 + 1)) - range));
+                if (!nums1.includes(base)) {
+                    nums1.push(base);
+                }
+                attempts++;
+            }
+            
+            // Если не удалось сгенерировать 8 чисел, пропускаем попытку
+            if (nums1.length < 8) continue;
+            
+            nums1.sort((a, b) => a - b);
+            
+            const num2 = Math.max(1, Math.min(4, Math.round(center / 5) || Math.floor(Math.random() * 4) + 1));
+            
+            const currentSum = nums1.reduce((a, b) => a + b, 0) + num2;
+            const diff = Math.abs(currentSum - avg);
+            
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestCombination = { nums1, num2 };
+            }
+        }
+
+        return bestCombination || generateColdNumbers();
+    }
+    
+    // Метод Карнауха (исправленный)
+    function generateKarnaughNumbers() {
+        if (history.length < 5) {
+            return generateColdNumbers();
+        }
+
+        const countField1 = Array(20).fill(0);
+        history.forEach(entry => {
+            entry.field1.forEach(n => countField1[n - 1]++);
+        });
+
+        const numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers.sort((a, b) => countField1[a - 1] - countField1[b - 1]);
+
+        // Правильный выбор диапазонов
+        const coldNumbers = numbers.slice(0, 3); // 3 самых холодных
+        const mediumNumbers = numbers.slice(8, 12); // 4 средних
+        const hotNumbers = numbers.slice(17, 20); // 3 самых горячих
+        
+        // Комбинирование и проверка уникальности
+        const combined = [...new Set([...coldNumbers, ...mediumNumbers, ...hotNumbers])];
+        
+        // Если получилось меньше 8 чисел, добиваем случайными
+        let selected1 = combined.slice(0, 8);
+        if (selected1.length < 8) {
+            const allNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            const availableNumbers = allNumbers.filter(n => !selected1.includes(n));
+            
+            while (selected1.length < 8 && availableNumbers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                selected1.push(availableNumbers.splice(randomIndex, 1)[0]);
+            }
+        }
+        
+        selected1 = selected1.slice(0, 8).sort((a, b) => a - b);
+
+        // Оптимальный выбор для второго поля
+        const countField2 = Array(4).fill(0);
+        history.forEach(entry => countField2[entry.field2 - 1]++);
+        const num2 = countField2.indexOf(Math.max(...countField2)) + 1;
+
+        return { nums1: selected1, num2 };
+    }
+    
+    // Метод равномерного распределения (новый)
+    function generateUniformNumbers() {
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if (n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if (entry.field2 >= 1 && entry.field2 <= 4) countField2[entry.field2 - 1]++;
+        });
+
+        if (history.length === 0) {
+            return {
+                nums1: generateRandomNumbers(),
+                num2: Math.floor(Math.random() * 4) + 1
+            };
+        }
+
+        // Разделяем числа на группы по частоте выпадения
+        const groups = [
+            { start: 1, end: 5 },   // Группа 1-5
+            { start: 6, end: 10 },  // Группа 6-10
+            { start: 11, end: 15 }, // Группа 11-15
+            { start: 16, end: 20 }  // Группа 16-20
+        ];
+
+        const selected1 = [];
+
+        // Выбираем по 2 числа из каждой группы
+        groups.forEach(group => {
+            const groupNumbers = [];
+            for (let i = group.start; i <= group.end; i++) {
+                groupNumbers.push(i);
+            }
+
+            // Сортируем по частоте выпадения (от наименьшей)
+            groupNumbers.sort((a, b) => countField1[a - 1] - countField1[b - 1]);
+
+            // Выбираем 2 самых редких числа в группе
+            selected1.push(groupNumbers[0], groupNumbers[1]);
+        });
+
+        // Для второго поля выбираем наименее выпадавшее число
+        const minCount = Math.min(...countField2);
+        const leastFrequent = [];
+        countField2.forEach((count, idx) => {
+            if(count === minCount) leastFrequent.push(idx + 1);
+        });
+        
+        const selected2 = leastFrequent[Math.floor(Math.random() * leastFrequent.length)] || 1;
+        
+        return { nums1: selected1, num2: selected2 };
+    }
+    
+    // Случайная генерация (вспомогательная)
+    function generateRandomNumbers() {
+        const nums1 = [];
+        const availableNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        
+        while (nums1.length < 8 && availableNumbers.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            nums1.push(availableNumbers.splice(randomIndex, 1)[0]);
+        }
+        
+        nums1.sort((a, b) => a - b);
+        return nums1;
+    }
+    
+    // Гибридная генерация (холодные + LSTM)
+    async function generateHybridNumbers() {
+        // Генерируем числа холодным методом
+        const coldNumbers = generateColdNumbers().nums1;
+        
+        // Генерируем числа с помощью LSTM
+        let lstmNumbers;
+        try {
+            lstmNumbers = await generateLSTMNumbers();
+        } catch (e) {
+            lstmNumbers = { nums1: generateRandomNumbers(), num2: Math.floor(Math.random() * 4) + 1 };
+        }
+        
+        // Комбинируем подходы (берем 4 холодных и 4 от LSTM)
+        const coldSet = new Set(coldNumbers.slice(0, 4));
+        const lstmSet = new Set(lstmNumbers.nums1.slice(0, 4));
+        const combined = [...new Set([...coldSet, ...lstmSet])];
+        
+        // Если получилось меньше 8 чисел, добиваем
+        let selected1 = combined.slice(0, 8);
+        if (selected1.length < 8) {
+            const allNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            const availableNumbers = allNumbers.filter(n => !selected1.includes(n));
+            
+            while (selected1.length < 8 && availableNumbers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                selected1.push(availableNumbers.splice(randomIndex, 1)[0]);
+            }
+        }
+        
+        selected1 = selected1.slice(0, 8).sort((a, b) => a - b);
+        
+        // Для второго поля выбираем то, которое чаще встречалось в истории
+        const countField2 = Array(4).fill(0);
+        history.forEach(entry => {
+            if (entry.field2 >= 1 && entry.field2 <= 4) {
+                countField2[entry.field2 - 1]++;
+            }
+        });
+        
+        let selected2 = lstmNumbers.num2;
+        // Если LSTM дал редкое число, проверяем альтернативы
+        if (history.length > 0 && countField2[selected2 - 1] === Math.min(...countField2)) {
+            // Выбираем наиболее частое
+            selected2 = countField2.indexOf(Math.max(...countField2)) + 1;
+        }
+        
+        return { nums1: selected1, num2: selected2 };
+    }
+    
+    // --- LSTM Модель (УЛУЧШЕННАЯ) ---
+    let lstmModel = null;
+    let isTraining = false;
+    const trainingStatus = document.getElementById('trainingStatus');
+    const trainingMessage = document.getElementById('trainingMessage');
+    const trainingProgress = document.getElementById('trainingProgress');
+    const modelAccuracy = document.getElementById('modelAccuracy');
+    const modelDataSize = document.getElementById('modelDataSize');
+    const trainModelBtn = document.getElementById('trainModelBtn');
+    const debugInfo = document.getElementById('debugInfo');
+    
+    // Инициализация модели
+    async function initModel() {
+        if (!trainingStatus) return;
+        
+        trainingStatus.style.display = 'block';
+        trainingMessage.textContent = 'Инициализация модели...';
+        
+        // Проверяем наличие сохраненной модели
+        try {
+            const modelInfo = JSON.parse(localStorage.getItem('lstmModelInfo') || '{}');
+            if (modelInfo.modelExists && history.length >= 15) {
+                try {
+                    // Загружаем модель из IndexedDB
+                    lstmModel = await tf.loadLayersModel('indexeddb://rapido-lstm-model');
+                    
+                    // Явная компиляция модели после загрузки
+                    lstmModel.compile({
+                        optimizer: tf.train.adam(0.0005),
+                        loss: 'binaryCrossentropy',
+                        metrics: ['accuracy']
+                    });
+                    
+                    modelAccuracy.textContent = modelInfo.accuracy ? `${modelInfo.accuracy}%` : '0%';
+                    trainingMessage.textContent = 'Модель загружена';
+                    if (debugInfo) debugInfo.textContent = 'Модель успешно загружена из IndexedDB';
+                } catch (e) {
+                    console.error('Ошибка загрузки модели:', e);
+                    if (debugInfo) debugInfo.textContent = 'Ошибка загрузки модели: ' + e.message;
+                    // Создаем новую модель при ошибке загрузки
+                    createModel();
+                    localStorage.removeItem('lstmModelInfo');
+                    trainingMessage.textContent = 'Создана новая модель';
+                }
+                return;
+            }
+        } catch (e) {
+            console.log('Модель не найдена, создаем новую', e);
+            if (debugInfo) debugInfo.textContent = 'Модель не найдена, создаем новую: ' + e.message;
+        }
+        
+        // Создаем новую модель
+        createModel();
+        trainingMessage.textContent = 'Готово к обучению';
+    }
+    
+    // Создание архитектуры модели
+    function createModel() {
+        lstmModel = tf.sequential();
+        
+        // Упрощенная архитектура для мобильных устройств
+        lstmModel.add(tf.layers.lstm({
+            units: 64,
+            inputShape: [10, 24],
+            returnSequences: true,
+            kernelRegularizer: tf.regularizers.l2({l2: 0.01})
+        }));
+        
+        lstmModel.add(tf.layers.batchNormalization());
+        lstmModel.add(tf.layers.dropout({rate: 0.3}));
+        
+        lstmModel.add(tf.layers.lstm({
+            units: 32,
+            returnSequences: false,
+            kernelRegularizer: tf.regularizers.l2({l2: 0.01})
+        }));
+        
+        lstmModel.add(tf.layers.batchNormalization());
+        lstmModel.add(tf.layers.dropout({rate: 0.3}));
+        
+        lstmModel.add(tf.layers.dense({
+            units: 24,
+            activation: 'relu',
+            kernelInitializer: 'heNormal'
+        }));
+        
+        // Выходный слой
+        lstmModel.add(tf.layers.dense({
+            units: 24,
+            activation: 'sigmoid'
+        }));
+        
+        // Компиляция модели
+        lstmModel.compile({
+            optimizer: tf.train.adam(0.001),
+            loss: 'binaryCrossentropy',
+            metrics: ['accuracy']
+        });
+    }
+    
+    // Подготовка данных для обучения
+    function prepareData() {
+        if (history.length < 15) {
+            if (trainingMessage) trainingMessage.textContent = 'Недостаточно данных (минимум 15 тиражей)';
+            return null;
+        }
+        
+        const sequenceLength = 10;
+        const X = [];
+        const y = [];
+        
+        // Преобразуем историю в числовые последовательности
+        for (let i = sequenceLength; i < history.length; i++) {
+            const sequence = [];
+            
+            // Формируем последовательность из 10 предыдуных тиражей
+            for (let j = i - sequenceLength; j < i; j++) {
+                const draw = history[j];
+                const vector = Array(24).fill(0);
+                
+                // Поле 1 (20 чисел)
+                draw.field1.forEach(num => {
+                    if (num >= 1 && num <= 20) vector[num-1] = 1;
+                });
+                
+                // Поле 2 (4 числа)
+                if (draw.field2 >= 1 && draw.field2 <= 4) {
+                    vector[20 + draw.field2 - 1] = 1;
+                }
+                
+                sequence.push(vector);
+            }
+            
+            X.push(sequence);
+            
+            // Целевой тираж
+            const targetDraw = history[i];
+            const targetVector = Array(24).fill(0);
+            
+            targetDraw.field1.forEach(num => {
+                if (num >= 1 && num <= 20) targetVector[num-1] = 1;
+            });
+            
+            if (targetDraw.field2 >= 1 && targetDraw.field2 <= 4) {
+                targetVector[20 + targetDraw.field2 - 1] = 1;
+            }
+            
+            y.push(targetVector);
+        }
+        
+        return {
+            X: tf.tensor3d(X),
+            y: tf.tensor2d(y)
+        };
+    }
+    
+    // Обучение модели
+    async function trainModel() {
+        if (isTraining || history.length < 15) return;
+        
+        isTraining = true;
+        if (trainingStatus) trainingStatus.style.display = 'block';
+        if (trainingMessage) trainingMessage.textContent = 'Подготовка данных...';
+        if (trainModelBtn) trainModelBtn.disabled = true;
+        
+        // Подготовка данных
+        const data = prepareData();
+        if (!data) {
+            if (trainingMessage) trainingMessage.textContent = 'Недостаточно данных для обучения';
+            isTraining = false;
+            if (trainModelBtn) trainModelBtn.disabled = false;
+            return;
+        }
+        
+        if (trainingMessage) trainingMessage.textContent = 'Обучение модели...';
+        
+        try {
+            // Обучение модели
+            const historyInfo = await lstmModel.fit(data.X, data.y, {
+                epochs: 50, // Уменьшено для мобильных устройств
+                batchSize: 8, // Уменьшено для мобильных устройств
+                validationSplit: 0.2,
+                callbacks: {
+                    onEpochEnd: async (epoch, logs) => {
+                        if (trainingMessage) {
+                            trainingMessage.textContent = `Эпоха ${epoch + 1}/50...`;
+                        }
+                        if (trainingProgress) {
+                            trainingProgress.style.width = `${((epoch + 1) / 50) * 100}%`;
+                        }
+                        if (modelAccuracy) {
+                            modelAccuracy.textContent = `${Math.round((logs.acc || logs.val_acc || 0) * 100)}%`;
+                        }
+                        await tf.nextFrame(); // Даем браузеру обновиться
+                        
+                        // Ранняя остановка при достижении хорошего результата
+                        if (logs.val_loss < 0.1) {
+                            lstmModel.stopTraining = true;
+                        }
+                    }
+                }
+            });
+            
+            // Сохраняем модель
+            await lstmModel.save('indexeddb://rapido-lstm-model');
+            
+            // Сохраняем метаданные
+            const accuracy = Math.round((historyInfo.history.acc[historyInfo.history.acc.length - 1] || 0) * 100);
+            localStorage.setItem('lstmModelInfo', JSON.stringify({
+                accuracy: accuracy,
+                trainedAt: new Date().toISOString(),
+                dataSize: history.length,
+                modelExists: true
+            }));
+            
+            if (modelAccuracy) modelAccuracy.textContent = `${accuracy}%`;
+            if (trainingMessage) trainingMessage.textContent = 'Обучение завершено!';
+            if (debugInfo) debugInfo.textContent = 'Модель успешно обучена и сохранена';
+        } catch (e) {
+            console.error('Ошибка обучения:', e);
+            if (trainingMessage) trainingMessage.textContent = 'Ошибка обучения: ' + e.message;
+            if (debugInfo) debugInfo.textContent = 'Ошибка обучения: ' + e.message;
+        } finally {
+            isTraining = false;
+            if (trainModelBtn) trainModelBtn.disabled = false;
+            // Освобождаем память
+            if (data) {
+                data.X.dispose();
+                data.y.dispose();
+            }
+        }
+    }
+    
+    // Онлайн-обучение модели
+    async function onlineTrainModel() {
+        if (isTraining || history.length < 15 || !lstmModel) return;
+        
+        try {
+            // Подготовка данных - только последние 20 записей
+            const sequenceLength = 10;
+            const startIdx = Math.max(0, history.length - 20);
+            const endIdx = history.length;
+            
+            const X = [];
+            const y = [];
+            
+            for (let i = startIdx + sequenceLength; i < endIdx; i++) {
+                const sequence = [];
+                
+                for (let j = i - sequenceLength; j < i; j++) {
+                    const draw = history[j];
+                    const vector = Array(24).fill(0);
+                    
+                    draw.field1.forEach(num => {
+                        if (num >= 1 && num <= 20) vector[num-1] = 1;
+                    });
+                    
+                    if (draw.field2 >= 1 && draw.field2 <= 4) {
+                        vector[20 + draw.field2 - 1] = 1;
+                    }
+                    
+                    sequence.push(vector);
+                }
+                
+                X.push(sequence);
+                
+                const targetDraw = history[i];
+                const targetVector = Array(24).fill(0);
+                
+                targetDraw.field1.forEach(num => {
+                    if (num >= 1 && num <= 20) targetVector[num-1] = 1;
+                });
+                
+                if (targetDraw.field2 >= 1 && targetDraw.field2 <= 4) {
+                    targetVector[20 + targetDraw.field2 - 1] = 1;
+                }
+                
+                y.push(targetVector);
+            }
+            
+            if (X.length === 0) return;
+            
+            const X_tensor = tf.tensor3d(X);
+            const y_tensor = tf.tensor2d(y);
+            
+            // Быстрое обучение на 5 эпохах
+            await lstmModel.fit(X_tensor, y_tensor, {
+                epochs: 5,
+                batchSize: 1,
+                shuffle: false
+            });
+            
+            // Обновляем метаданные
+            const modelInfo = JSON.parse(localStorage.getItem('lstmModelInfo') || '{}');
+            modelInfo.trainedAt = new Date().toISOString();
+            modelInfo.dataSize = history.length;
+            localStorage.setItem('lstmModelInfo', JSON.stringify(modelInfo));
+            
+            console.log('Модель обновлена онлайн');
+            if (debugInfo) debugInfo.textContent = 'Модель обновлена онлайн';
+        } catch (e) {
+            console.error('Ошибка онлайн-обучения:', e);
+            if (debugInfo) debugInfo.textContent = 'Ошибка онлайн-обучения: ' + e.message;
+        }
+    }
+    
+    // Получение предсказаний LSTM
+    async function getLSTMPredictions() {
+        if (!lstmModel || history.length < 10) {
+            if (debugInfo) debugInfo.textContent = 'Модель не готова или недостаточно данных для прогноза';
+            return null;
+        }
+        
+        try {
+            // Создаем последовательность из последних 10 тиражей
+            const sequence = [];
+            
+            for (let i = history.length - 10; i < history.length; i++) {
+                const draw = history[i];
+                const vector = Array(24).fill(0);
+                
+                draw.field1.forEach(num => {
+                    if (num >= 1 && num <= 20) vector[num-1] = 1;
+                });
+                
+                if (draw.field2 >= 1 && draw.field2 <= 4) {
+                    vector[20 + draw.field2 - 1] = 1;
+                }
+                
+                sequence.push(vector);
+            }
+            
+            // Используем tf.tidy для автоматического управления памятью
+            const values = tf.tidy(() => {
+                // Преобразуем в тензор
+                const input = tf.tensor3d([sequence]);
+                
+                // Получаем предсказание
+                const prediction = lstmModel.predict(input);
+                
+                // Синхронно получаем данные
+                return Array.from(prediction.dataSync());
+            });
+            
+            // Проверяем, есть ли NaN в предсказаниях
+            if (values.some(v => isNaN(v))) {
+                if (debugInfo) debugInfo.textContent = 'LSTM модель вернула NaN значения';
+                return null;
+            }
+            
+            // Разделяем предсказания для полей 1 и 2
+            const field1Predictions = values.slice(0, 20);
+            const field2Predictions = values.slice(20, 24);
+            
+            if (debugInfo) debugInfo.textContent = 'Прогнозы LSTM успешно получены';
+            return {
+                field1: field1Predictions,
+                field2: field2Predictions
+            };
+        } catch (e) {
+            console.error('Ошибка получения предсказаний LSTM:', e);
+            if (debugInfo) debugInfo.textContent = 'Ошибка получения предсказаний LSTM: ' + e.message;
+            return null;
+        }
+    }
+    
+    // Генерация чисел с помощью LSTM
+    async function generateLSTMNumbers() {
+        const predictions = await getLSTMPredictions();
+        
+        if (!predictions) {
+            if (debugInfo) debugInfo.textContent = 'Не удалось получить предсказания LSTM, используем гибридный метод';
+            return generateHybridNumbers(); // Fallback
+        }
+        
+        try {
+            // 1. Нормализуем вероятности для поля 1
+            const field1Probs = predictions.field1;
+            const sum1 = field1Probs.reduce((a, b) => a + b, 0);
+            
+            // Если сумма вероятностей равна 0, используем равномерное распределение
+            const normalizedProbs1 = sum1 > 0 ? 
+                field1Probs.map(p => p / sum1) : 
+                Array(20).fill(1/20);
+            
+            // 2. Выбираем числа с учетом вероятностей
+            const nums1 = [];
+            const availableNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            
+            for (let i = 0; i < 8; i++) {
+                // Создаем распределение вероятностей
+                let rand = Math.random();
+                let cumulative = 0;
+                let selectedIndex = 0;
+                
+                for (let j = 0; j < availableNumbers.length; j++) {
+                    const num = availableNumbers[j];
+                    cumulative += normalizedProbs1[num-1];
+                    if (rand <= cumulative) {
+                        selectedIndex = j;
+                        break;
+                    }
+                }
+                
+                nums1.push(availableNumbers[selectedIndex]);
+                availableNumbers.splice(selectedIndex, 1);
+                
+                // Пересчитываем вероятности для оставшихся чисел
+                const newSum = availableNumbers.reduce(
+                    (sum, num) => sum + normalizedProbs1[num-1], 0
+                );
+                
+                if (newSum > 0) {
+                    for (let j = 0; j < availableNumbers.length; j++) {
+                        const num = availableNumbers[j];
+                        normalizedProbs1[num-1] /= newSum;
+                    }
+                }
+            }
+            
+            nums1.sort((a, b) => a - b);
+            
+            // 3. Выбираем число для поля 2
+            const field2Probs = predictions.field2;
+            const sum2 = field2Probs.reduce((a, b) => a + b, 0);
+            
+            // Если сумма вероятностей равна 0, используем равномерное распределение
+            const normalizedProbs2 = sum2 > 0 ? 
+                field2Probs.map(p => p / sum2) : 
+                Array(4).fill(0.25);
+            
+            let rand = Math.random();
+            let cumulative = 0;
+            let field2Num = 1;
+            
+            for (let i = 0; i < 4; i++) {
+                cumulative += normalizedProbs2[i];
+                if (rand <= cumulative) {
+                    field2Num = i + 1;
+                    break;
+                }
+            }
+            
+            if (debugInfo) debugInfo.textContent = 'LSTM генерация выполнена успешно';
+            return { nums1, num2: field2Num };
+        } catch (e) {
+            console.error('Ошибка генерации LSTM:', e);
+            if (debugInfo) debugInfo.textContent = 'Ошибка генерации LSTM: ' + e.message;
+            return generateHybridNumbers();
+        }
+    }
+    
+    // --- Анализ паттернов (ИСПРАВЛЕННАЯ ФУНКЦИЯ) ---
+    function analyzePatterns() {
+        if (history.length < 5) {
+            return [];
+        }
+        
+        const patterns = [];
+        const lastDraws = history.slice(-10); // Анализируем последние 10 тиражей
+        
+        // Проверяем, есть ли выигрыши в последних тиражах
+        const recentWins = lastDraws.filter(d => d.winAmount && d.winAmount > 0).length;
+        if (recentWins === 0 && lastDraws.length >= 5) {
+            // Добавляем специальный паттерн для серии проигрышей
+            patterns.push({
+                name: 'Серия проигрышей',
+                description: `Последние ${lastDraws.length} тиражей без выигрышей`,
+                numbers: generateColdNumbers().nums1, // Используем холодные числа
+                field2Prediction: Math.floor(Math.random() * 4) + 1,
+                confidence: 0.6,
+                type: 'streak_break'
+            });
+        }
+        
+        // 1. Анализ горячих чисел в последних тиражах
+        const freqField1 = Array(20).fill(0);
+        const freqField2 = Array(4).fill(0);
+        
+        lastDraws.forEach(draw => {
+            draw.field1.forEach(num => {
+                if (num >= 1 && num <= 20) freqField1[num-1]++;
+            });
+            if (draw.field2 >= 1 && draw.field2 <= 4) {
+                freqField2[draw.field2-1]++;
+            }
+        });
+        
+        // Горячие числа (часто выпадающие)
+        const hotNumbers = Array.from({ length: 20 }, (_, i) => i + 1)
+            .sort((a, b) => freqField1[b-1] - freqField1[a-1])
+            .slice(0, 8);
+        
+        // Холодные числа (редко выпадающие)
+        const coldNumbers = Array.from({ length: 20 }, (_, i) => i + 1)
+            .sort((a, b) => freqField1[a-1] - freqField1[b-1])
+            .slice(0, 8);
+        
+        // Горячее число для поля 2
+        const hotField2 = freqField2.indexOf(Math.max(...freqField2)) + 1;
+        // Холодное число для поля 2
+        const coldField2 = freqField2.indexOf(Math.min(...freqField2)) + 1;
+        
+        // Добавляем паттерн горячих чисел
+        patterns.push({
+            name: 'Горячие числа',
+            description: `Числа, которые чаще всего выпадали в последних ${lastDraws.length} тиражах`,
+            numbers: hotNumbers.sort((a, b) => a - b),
+            field2Prediction: hotField2,
+            confidence: 0.7,
+            type: 'hot_numbers'
+        });
+        
+        // Добавляем паттерн холодных чисел
+        patterns.push({
+            name: 'Холодные числа',
+            description: `Числа, которые реже всего выпадали в последних ${lastDraws.length} тиражах`,
+            numbers: coldNumbers.sort((a, b) => a - b),
+            field2Prediction: coldField2,
+            confidence: 0.65,
+            type: 'cold_numbers'
+        });
+        
+        // 2. Анализ парных паттернов (числа, которые часто выпадают вместе)
+        if (lastDraws.length >= 5) {
+            const pairPatterns = analyzePairPatterns(lastDraws);
+            if (pairPatterns.length > 0) {
+                patterns.push(...pairPatterns);
+            }
+        }
+        
+        // 3. Анализ прогрессий (арифметические последовательности)
+        if (lastDraws.length >= 3) {
+            const progressionPatterns = analyzeProgressions(lastDraws);
+            if (progressionPatterns.length > 0) {
+                patterns.push(...progressionPatterns);
+            }
+        }
+        
+        // Сортируем паттерны по уверенности
+        patterns.sort((a, b) => b.confidence - a.confidence);
+        
+        return patterns;
+    }
+    
+    // Анализ парных паттернов
+    function analyzePairPatterns(lastDraws) {
+        const patterns = [];
+        const pairFrequency = {};
+        
+        // Считаем частоту пар чисел
+        for (const draw of lastDraws) {
+            const sortedNumbers = [...draw.field1].sort((a, b) => a - b);
+            
+            for (let i = 0; i < sortedNumbers.length; i++) {
+                for (let j = i + 1; j < sortedNumbers.length; j++) {
+                    const pair = `${sortedNumbers[i]}-${sortedNumbers[j]}`;
+                    pairFrequency[pair] = (pairFrequency[pair] || 0) + 1;
+                }
+            }
+        }
+        
+        // Находим самые частые пары
+        const sortedPairs = Object.entries(pairFrequency)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+        
+        if (sortedPairs.length > 0) {
+            // Берем 4 самые частые пары и добавляем к ним 4 случайных числа
+            const frequentPairs = sortedPairs.slice(0, 4);
+            const numbers = new Set();
+            
+            frequentPairs.forEach(pair => {
+                const [num1, num2] = pair[0].split('-').map(Number);
+                numbers.add(num1);
+                numbers.add(num2);
+            });
+            
+            // Добавляем случайные числа до 8
+            const allNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            while (numbers.size < 8) {
+                const randomNum = allNumbers[Math.floor(Math.random() * allNumbers.length)];
+                if (!numbers.has(randomNum)) {
+                    numbers.add(randomNum);
+                }
+            }
+            
+            const selectedNumbers = Array.from(numbers).slice(0, 8).sort((a, b) => a - b);
+            
+            patterns.push({
+                name: 'Парные паттерны',
+                description: 'Числа, которые часто выпадают вместе',
+                numbers: selectedNumbers,
+                field2Prediction: Math.floor(Math.random() * 4) + 1,
+                confidence: 0.6,
+                type: 'pair_pattern'
+            });
+        }
+        
+        return patterns;
+    }
+    
+    // Анализ прогрессий
+    function analyzeProgressions(lastDraws) {
+        const patterns = [];
+        
+        // Берем последние 3 тиража
+        const recentDraws = lastDraws.slice(-3);
+        
+        if (recentDraws.length < 3) return patterns;
+        
+        // Ищем арифметические прогрессии
+        const allNumbers = [];
+        recentDraws.forEach(draw => {
+            allNumbers.push(...draw.field1);
+        });
+        
+        // Ищем 8 чисел, которые образуют прогрессию
+        const uniqueNumbers = [...new Set(allNumbers)].sort((a, b) => a - b);
+        
+        if (uniqueNumbers.length >= 8) {
+            // Пробуем найти прогрессию с шагом 1-3
+            for (let step = 1; step <= 3; step++) {
+                const progression = [];
+                for (let i = 0; i < uniqueNumbers.length; i++) {
+                    const currentProgression = [uniqueNumbers[i]];
+                    for (let j = i + 1; j < uniqueNumbers.length; j++) {
+                        if (uniqueNumbers[j] === currentProgression[currentProgression.length - 1] + step) {
+                            currentProgression.push(uniqueNumbers[j]);
+                            if (currentProgression.length >= 8) break;
+                        }
+                    }
+                    
+                    if (currentProgression.length >= 8) {
+                        progression.push(...currentProgression.slice(0, 8));
+                        break;
+                    }
+                }
+                
+                if (progression.length >= 8) {
+                    patterns.push({
+                        name: `Арифметическая прогрессия (шаг ${step})`,
+                        description: 'Числа, образующие арифметическую прогрессию',
+                        numbers: progression.slice(0, 8).sort((a, b) => a - b),
+                        field2Prediction: Math.floor(Math.random() * 4) + 1,
+                        confidence: 0.55,
+                        type: 'progression'
+                    });
+                    break;
+                }
+            }
+        }
+        
+        return patterns;
+    }
+    
+    // Генерация чисел на основе паттернов
+    async function generatePatternNumbers() {
+        const patterns = analyzePatterns();
+        
+        if (patterns.length === 0) {
+            // Если паттернов нет, используем холодные числа
+            if (debugInfo) debugInfo.textContent = 'Паттерны не найдены, используем холодные числа';
+            return generateColdNumbers();
+        }
+        
+        // Выбираем лучший паттерн (с наибольшей уверенностью)
+        const bestPattern = patterns[0];
+        
+        if (debugInfo) debugInfo.textContent = `Используем паттерн: ${bestPattern.name}`;
+        
+        return {
+            nums1: bestPattern.numbers,
+            num2: bestPattern.field2Prediction
+        };
+    }
+    
+    // --- ИИ анализ (оптимизированный) ---
+    function performAIAnalysis() {
+        if (history.length < 10) {
+            return {
+                recommendation: null,
+                patterns: [],
+                confidence: 0
+            };
+        }
+        
+        const patterns = analyzePatterns();
+        const lastDraws = history.slice(-15);
+        
+        // Анализируем эффективность различных методов
+        const methodEffectiveness = {};
+        Object.keys(winStats).forEach(method => {
+            const stats = winStats[method];
+            if (stats.bets > 0) {
+                methodEffectiveness[method] = {
+                    winRate: stats.wins / stats.bets,
+                    roi: stats.spent > 0 ? stats.won / stats.spent : 0,
+                    balance: stats.balance
+                };
+            }
+        });
+        
+        // Определяем лучший метод
+        let bestMethod = 'hybrid';
+        let bestScore = 0;
+        
+        Object.entries(methodEffectiveness).forEach(([method, data]) => {
+            const score = (data.winRate * 0.6) + (data.roi * 0.4);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMethod = method;
+            }
+        });
+        
+        // Создаем рекомендацию на основе лучшего метода и паттернов
+        let recommendation;
+        if (patterns.length > 0 && patterns[0].confidence > 0.7) {
+            recommendation = {
+                numbers: patterns[0].numbers,
+                field2: patterns[0].field2Prediction,
+                method: 'patterns',
+                confidence: patterns[0].confidence,
+                reason: `Высококачественный паттерн обнаружен: ${patterns[0].name}`
+            };
+        } else if (bestMethod !== 'cold') {
+            // Используем лучший метод
+            recommendation = {
+                numbers: generateNumbersByMethod(bestMethod),
+                field2: getField2ByMethod(bestMethod),
+                method: bestMethod,
+                confidence: 0.65,
+                reason: `Метод "${bestMethod}" показал лучшие результаты в истории`
+            };
+        } else {
+            // Используем холодные числа
+            const coldNumbers = generateColdNumbers();
+            recommendation = {
+                numbers: coldNumbers.nums1,
+                field2: coldNumbers.num2,
+                method: 'cold',
+                confidence: 0.6,
+                reason: 'Использованы холодные числа как наиболее надежный метод'
+            };
+        }
+        
+        return {
+            recommendation,
+            patterns: patterns.slice(0, 3),
+            confidence: recommendation.confidence,
+            methodEffectiveness
+        };
+    }
+    
+    // Генерация чисел по методу
+    function generateNumbersByMethod(method) {
+        switch(method) {
+            case 'cold': return generateColdNumbers().nums1;
+            case 'ogneva': return generateOgnevaNumbers().nums1;
+            case 'karnaugh': return generateKarnaughNumbers().nums1;
+            case 'uniform': return generateUniformNumbers().nums1;
+            case 'hybrid': return generateHybridNumbers().nums1;
+            default: return generateRandomNumbers();
+        }
+    }
+    
+    // Получение числа для поля 2 по методу
+    function getField2ByMethod(method) {
+        switch(method) {
+            case 'cold': return generateColdNumbers().num2;
+            case 'ogneva': return generateOgnevaNumbers().num2;
+            case 'karnaugh': return generateKarnaughNumbers().num2;
+            case 'uniform': return generateUniformNumbers().num2;
+            case 'hybrid': return generateHybridNumbers().num2;
+            default: return Math.floor(Math.random() * 4) + 1;
+        }
+    }
+    
+    // Генерация чисел ИИ анализом
+    async function generateAINumbers() {
+        const aiAnalysis = performAIAnalysis();
+        
+        if (!aiAnalysis || !aiAnalysis.recommendation) {
+            if (debugInfo) debugInfo.textContent = 'ИИ анализ не дал рекомендаций, используем гибридный метод';
+            return generateHybridNumbers();
+        }
+        
+        if (debugInfo) debugInfo.textContent = `ИИ рекомендует: ${aiAnalysis.recommendation.reason}`;
+        
+        return {
+            nums1: aiAnalysis.recommendation.numbers,
+            num2: aiAnalysis.recommendation.field2
+        };
+    }
+    
+    // --- Отображение истории ---
+    const historyList = document.getElementById('historyList');
+    function renderHistory() {
+        if (!historyList) return;
+        
+        historyList.innerHTML = '';
+        history.forEach((entry, idx) => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            
+            let methodTag = '';
+            if(entry.method) {
+                let tagClass = '';
+                let tagText = '';
+                switch(entry.method) {
+                    case 'cold': tagClass = 'tag-cold'; tagText = 'хо'; break;
+                    case 'ogneva': tagClass = 'tag-ogneva'; tagText = 'ог'; break;
+                    case 'karnaugh': tagClass = 'tag-karnaugh'; tagText = 'ка'; break;
+                    case 'uniform': tagClass = 'tag-uniform'; tagText = 'ур'; break;
+                    case 'lstm': tagClass = 'tag-lstm'; tagText = 'AI'; break;
+                    case 'hybrid': tagClass = 'tag-hybrid'; tagText = 'ГБ'; break;
+                    case 'patterns': tagClass = 'tag-pattern'; tagText = 'ПТ'; break;
+                    case 'ai': tagClass = 'tag-ai'; tagText = 'ИИ'; break;
+                    case 'smart': tagClass = 'tag-lstm'; tagText = 'УМ'; break;
+                }
+                methodTag = `<span class="method-tag ${tagClass}">${tagText}</span>`;
+            }
+            
+            // Добавляем информацию о выигрыше, если она есть
+            let winInfo = '';
+            if (entry.winAmount) {
+                winInfo = `<span style="color: var(--win-color); font-weight: bold; margin-left: 5px;">+${entry.winAmount} ₽</span>`;
+            }
+            
+            div.innerHTML = `
+                <div>
+                    <strong>Тираж ${entry.drawId}:</strong> 
+                    ${entry.field1.join(',')} | ${entry.field2}
+                    ${methodTag}
+                    ${winInfo}
+                </div>
+                <button data-idx="${idx}">X</button>
+            `;
+            historyList.appendChild(div);
+        });
+        
+        // Обновляем счетчик данных модели
+        if (modelDataSize) {
+            modelDataSize.textContent = history.length;
+        }
+    }
+    
+    // Удаление записи истории
+    if (historyList) {
+        historyList.addEventListener('click', e => {
+            if(e.target.tagName === 'BUTTON') {
+                const idx = +e.target.dataset.idx;
+                history.splice(idx, 1);
+                saveHistory();
+                renderHistory();
+                updateStats();
+                updateWinStats();
+                updateCharts();
+                renderHeatmap();
+                updatePredictionCharts();
+                updatePatternsAnalysis();
+                updateAIAnalysis();
+                updateConfidenceIndicator();
+            }
+        });
+    }
+    
+    // Очистка истории
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.onclick = () => {
+            if(confirm('Очистить всю историю, ставки и статистику?')) {
+                history = [];
+                bets = [];
+                saveHistory();
+                saveBets();
+                renderHistory();
+                updateStats();
+                
+                winStats = {
+                    cold: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    ogneva: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    karnaugh: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    uniform: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    lstm: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    hybrid: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    patterns: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    ai: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
+                    smart: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 }
+                };
+                saveWinStats();
+                updateWinStats();
+                updateCharts();
+                renderHeatmap();
+                updatePredictionCharts();
+                updatePatternsAnalysis();
+                updateAIAnalysis();
+                updateConfidenceIndicator();
+            }
+        };
+    }
+
+    // --- Валидация ввода ---
+    const validationError = document.getElementById('validationError');
+
+    function validateDrawInput() {
+        if (validationError) validationError.style.display = 'none';
+        const drawIdInput = document.getElementById('drawId');
+        const drawId = drawIdInput ? drawIdInput.value.trim() : '';
+        
+        if(!drawId) {
+            if (validationError) {
+                validationError.textContent = 'Введите номер тиража';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Проверка дубликата тиража
+        if(history.some(entry => entry.drawId == drawId)) {
+            if (validationError) {
+                validationError.textContent = 'Тираж с таким номером уже существует';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Проверка поля 1
+        const nums1 = Array.from(selectedField1).sort((a, b) => a - b);
+        if(nums1.length !== 8) {
+            if (validationError) {
+                validationError.textContent = 'В поле 1 должно быть выбрано 8 чисел';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        const invalid1 = nums1.filter(n => n < 1 || n > 20);
+        if(invalid1.length > 0) {
+            if (validationError) {
+                validationError.textContent = `Числа в поле 1 должны быть от 1 до 20. Ошибка: ${invalid1.join(', ')}`;
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Проверка дубликатов в поле 1
+        const unique = new Set(nums1);
+        if(unique.size !== 8) {
+            if (validationError) {
+                validationError.textContent = 'В поле 1 не должно быть повторяющихся чисел';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Проверка поля 2
+        if(selectedField2 === null) {
+            if (validationError) {
+                validationError.textContent = 'Выберите число в поле 2';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        const num2 = selectedField2;
+        if(num2 < 1 || num2 > 4) {
+            if (validationError) {
+                validationError.textContent = 'Число в поле 2 должно быть от 1 до 4';
+                validationError.style.display = 'block';
+            }
+            return false;
+        }
+        
+        return { drawId, nums1, num2 };
+    }
+
+    // --- Добавление в историю ---
+    const addHistoryBtn = document.getElementById('addHistoryBtn');
+    if (addHistoryBtn) {
+        addHistoryBtn.onclick = () => {
+            const validData = validateDrawInput();
+            if(!validData) return;
+            
+            const { drawId, nums1, num2 } = validData;
+            
+            // Создаем объект результата розыгрыша
+            const result = {
+                drawId,
+                field1: nums1,
+                field2: num2,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Ищем ставку для этого тиража
+            const betIndex = bets.findIndex(bet => bet.drawId === drawId);
+            
+            if (betIndex !== -1) {
+                const bet = bets[betIndex];
+                
+                // Сравниваем ставку с результатом
+                const matchedField1 = bet.numbers.field1.filter(n => nums1.includes(n)).length;
+                const matchedField2 = bet.numbers.field2 === num2 ? 1 : 0;
+                
+                const prizeKey = `${matchedField1},${matchedField2}`;
+                const prize = prizeTable[prizeKey];
+                
+                if (prize) {
+                    result.winAmount = prize.amount;
+                    result.winType = prize.label;
+                    result.betMethod = bet.method;
+                    
+                    // Обновляем статистику
+                    if (winStats[bet.method]) {
+                        winStats[bet.method].wins++;
+                        winStats[bet.method].won += prize.amount;
+                        winStats[bet.method].balance = winStats[bet.method].won - winStats[bet.method].spent;
+                    }
+                }
+                
+                // Удаляем ставку после расчета выигрыша
+                bets.splice(betIndex, 1);
+                saveBets();
+            }
+            
+            history.push(result);
+            saveHistory();
+            
+            // Очищаем поля ввода
+            clearAllFields();
+            
+            renderHistory();
+            updateStats();
+            updateWinStats();
+            updateCharts();
+            renderHeatmap();
+            updatePredictionCharts();
+            updatePatternsAnalysis();
+            updateAIAnalysis();
+            updateConfidenceIndicator();
+            
+            // Онлайн-обучение модели при наличии новых данных
+            if (history.length >= 15 && lstmModel) {
+                setTimeout(onlineTrainModel, 1000);
+            }
+        };
+    }
+
+    // --- Статистика чисел ---
+    const statsTable = document.getElementById('statsTable');
+
+    function updateStats() {
+        if (!statsTable) return;
+        
+        // Считаем частоты для обоих полей
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if(entry.field2 >= 1 && entry.field2 <= 4) countField2[entry.field2 - 1]++;
+        });
+
+        // Находим максимальную частоту для нормализации
+        const maxCount1 = Math.max(...countField1) || 1;
+        const maxCount2 = Math.max(...countField2) || 1;
+
+        let html = '<tr><th>Число (8 из 20)</th><th>Частота</th><th>График</th><th>Число (1 из 4)</th><th>Частота</th><th>График</th></tr>';
+
+        for(let i = 0; i < 20; i++) {
+            const freq1 = countField1[i] || 0;
+            const freqPercent1 = maxCount1 ? Math.round((freq1 / maxCount1) * 100) : 0;
+            
+            const freq2 = (i < 4) ? countField2[i] || 0 : 0;
+            const freqPercent2 = (i < 4 && maxCount2) ? Math.round((freq2 / maxCount2) * 100) : 0;
+            
+            const hotColdClass1 = freq1 > (history.length / 2) ? 'hot' : 'cold';
+            const hotColdClass2 = (i < 4 && freq2 > (history.length / 4)) ? 'hot' : 'cold';
+            
+            html += `<tr>
+                <td>${i + 1}</td>
+                <td class="${hotColdClass1}">${freq1}</td>
+                <td><div class="frequency-bar"><div class="frequency-fill" style="width: ${freqPercent1}%"></div></div></td>
+                <td>${i < 4 ? i + 1 : ''}</td>
+                <td>${i < 4 ? `<span class="${hotColdClass2}">${freq2}</span>` : ''}</td>
+                <td>${i < 4 ? `<div class="frequency-bar"><div class="frequency-fill" style="width: ${freqPercent2}%"></div></div>` : ''}</td>
+            </tr>`;
+        }
+        statsTable.innerHTML = html;
+    }
+    
+    // --- Статистика выигрышей ---
+    const winStatsContainer = document.getElementById('winStats');
+    
+    function updateWinStats() {
+        if (!winStatsContainer) return;
+        
+        winStatsContainer.innerHTML = '';
+        
+        const methods = {
+            cold: { name: 'Холодные', class: 'tag-cold' },
+            ogneva: { name: 'Огнева', class: 'tag-ogneva' },
+            karnaugh: { name: 'Карнауха', class: 'tag-karnaugh' },
+            uniform: { name: 'Равномерный', class: 'tag-uniform' },
+            lstm: { name: 'LSTM Прогноз', class: 'tag-lstm' },
+            hybrid: { name: 'Гибридный', class: 'tag-hybrid' },
+            patterns: { name: 'Паттерны', class: 'tag-pattern' },
+            ai: { name: 'ИИ Анализ', class: 'tag-ai' },
+            smart: { name: 'Умная генерация', class: 'tag-lstm' }
+        };
+        
+        for(const [method, data] of Object.entries(winStats)) {
+            const methodData = methods[method];
+            if (!methodData) continue;
+            
+            const winRate = data.bets ? Math.round((data.wins / data.bets) * 100) : 0;
+            const roi = data.spent ? Math.round((data.won / data.spent) * 100) : 0;
+            
+            const statCard = document.createElement('div');
+            statCard.className = 'stat-card';
+            statCard.innerHTML = `
+                <div class="stat-label">${methodData.name}</div>
+                <div class="stat-value">${data.bets}</div>
+                <div class="stat-label">Ставки</div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div>
+                        <div class="stat-value win">${data.wins}</div>
+                        <div class="stat-label">Выиграно</div>
+                    </div>
+                    <div>
+                        <div class="stat-value">${winRate}%</div>
+                        <div class="stat-label">Процент</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <div class="stat-value">${data.balance} ₽</div>
+                    <div class="stat-label">Баланс</div>
+                </div>
+                
+                <div style="margin-top: 5px; font-size: 0.8rem;">
+                    <div>Потрачено: ${data.spent} ₽</div>
+                    <div>Выиграно: ${data.won} ₽</div>
+                    <div>ROI: ${roi}%</div>
+                </div>
+            `;
+            winStatsContainer.appendChild(statCard);
+        }
+        
+        saveWinStats();
+    }
+    
+    // Отображение сгенерированных чисел
+    function displayNumbers(nums1, num2, method = 'cold') {
+        const field1 = document.getElementById('field1');
+        const field2 = document.getElementById('field2');
+        if (!field1 || !field2) return;
+        
+        field1.innerHTML = '';
+        field2.innerHTML = '';
+
+        nums1.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'number';
+            if (method === 'lstm' || method === 'smart') {
+                div.classList.add('lstm');
+            } else if (method === 'hybrid') {
+                div.classList.add('hybrid');
+            } else if (method === 'patterns') {
+                div.classList.add('pattern');
+            } else if (method === 'ai') {
+                div.classList.add('ai');
+            } else if(method === 'karnaugh' && nums1.indexOf(n) < 5) {
+                div.classList.add('special');
+            } else if(method === 'uniform') {
+                div.classList.add('special');
+            }
+            div.textContent = n;
+            field1.appendChild(div);
+        });
+        
+        const div2 = document.createElement('div');
+        div2.className = 'number small';
+        if (method === 'lstm' || method === 'smart') {
+            div2.classList.add('lstm');
+        } else if (method === 'hybrid') {
+            div2.classList.add('hybrid');
+        } else if (method === 'patterns') {
+            div2.classList.add('pattern');
+        } else if (method === 'ai') {
+            div2.classList.add('ai');
+        } else if(method === 'ogneva' || method === 'uniform') {
+            div2.classList.add('special');
+        }
+        div2.textContent = num2;
+        field2.appendChild(div2);
+        
+        // Анимация выбора
+        setTimeout(() => {
+            field1.querySelectorAll('.number').forEach(el => {
+                el.classList.add('selected');
+            });
+            div2.classList.add('selected');
+        }, 100);
+    }
+
+    // --- Визуализация данных ---
+    
+    // Тепловая карта
+    function renderHeatmap() {
+        const heatmapGrid = document.getElementById('heatmapGrid');
+        if (!heatmapGrid) return;
+        
+        if (history.length === 0) {
+            heatmapGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Нет данных для отображения тепловой карты</div>';
+            return;
+        }
+        
+        // Считаем совместную встречаемость чисел
+        const coOccurrence = Array(20).fill().map(() => Array(20).fill(0));
+        
+        history.forEach(entry => {
+            const nums = entry.field1;
+            for (let i = 0; i < nums.length; i++) {
+                for (let j = i + 1; j < nums.length; j++) {
+                    const a = nums[i] - 1;
+                    const b = nums[j] - 1;
+                    coOccurrence[a][b]++;
+                    coOccurrence[b][a]++;
+                }
+            }
+        });
+        
+        // Находим максимальное значение для нормализации
+        let maxVal = 0;
+        for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 20; j++) {
+                if (coOccurrence[i][j] > maxVal) {
+                    maxVal = coOccurrence[i][j];
+                }
+            }
+        }
+        
+        heatmapGrid.innerHTML = '';
+        
+        // Создаем ячейки тепловой карты
+        for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 20; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                
+                const value = coOccurrence[i][j];
+                let intensity = maxVal > 0 ? value / maxVal : 0;
+                
+                // Цвет в зависимости от интенсивности
+                const hue = 240 - (intensity * 240); // От синего (холодный) к красному (горячий)
+                const saturation = 70 + (intensity * 30);
+                const lightness = 50 - (intensity * 20);
+                
+                cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                cell.style.fontSize = '8px';
+                
+                if (intensity > 0.5) {
+                    cell.textContent = value;
+                    cell.style.color = 'white';
+                } else if (value > 0) {
+                    cell.textContent = value;
+                    cell.style.color = '#333';
+                }
+                
+                cell.title = `Числа ${i+1} и ${j+1} встречались вместе ${value} раз`;
+                heatmapGrid.appendChild(cell);
+            }
+        }
+    }
+    
+    // Обновление графиков
+    function updateCharts() {
+        // График эффективности методов
+        const efficiencyChartCanvas = document.getElementById('efficiencyChart');
+        if (!efficiencyChartCanvas) return;
+        
+        const ctx = efficiencyChartCanvas.getContext('2d');
+        
+        // Если уже есть график, уничтожаем его
+        if (window.efficiencyChartInstance) {
+            window.efficiencyChartInstance.destroy();
+        }
+        
+        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'hybrid', 'patterns', 'ai', 'smart'];
+        const methodNames = {
+            cold: 'Холодные',
+            ogneva: 'Огнева',
+            karnaugh: 'Карнауха',
+            uniform: 'Равномерный',
+            lstm: 'LSTM',
+            hybrid: 'Гибридный',
+            patterns: 'Паттерны',
+            ai: 'ИИ Анализ',
+            smart: 'Умная'
+        };
+        
+        const winRates = methods.map(method => {
+            const stats = winStats[method];
+            return stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
+        });
+        
+        const roiValues = methods.map(method => {
+            const stats = winStats[method];
+            return stats.spent > 0 ? (stats.won / stats.spent) * 100 : 0;
+        });
+        
+        window.efficiencyChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: methods.map(m => methodNames[m]),
+                datasets: [
+                    {
+                        label: 'Процент выигрышей (%)',
+                        data: winRates,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'ROI (%)',
+                        data: roiValues,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Процент'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Обновление графиков прогнозов
+    async function updatePredictionCharts() {
+        const predictions = await getLSTMPredictions();
+        
+        if (!predictions) return;
+        
+        // График для поля 1
+        const field1ChartCanvas = document.getElementById('field1PredictionChart');
+        if (field1ChartCanvas) {
+            const ctx1 = field1ChartCanvas.getContext('2d');
+            
+            if (window.field1ChartInstance) {
+                window.field1ChartInstance.destroy();
+            }
+            
+            window.field1ChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({ length: 20 }, (_, i) => i + 1),
+                    datasets: [{
+                        label: 'Вероятность выпадения',
+                        data: predictions.field1,
+                        backgroundColor: 'rgba(0, 188, 212, 0.6)',
+                        borderColor: 'rgba(0, 188, 212, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Вероятность'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Номер'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Отображаем предсказанные числа
+            const field1PredictionNumbers = document.getElementById('field1PredictionNumbers');
+            if (field1PredictionNumbers) {
+                field1PredictionNumbers.innerHTML = '';
+                
+                // Сортируем числа по вероятности
+                const sortedPredictions = predictions.field1
+                    .map((prob, index) => ({ number: index + 1, probability: prob }))
+                    .sort((a, b) => b.probability - a.probability)
+                    .slice(0, 10);
+                
+                sortedPredictions.forEach(pred => {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'prediction-number';
+                    numberDiv.textContent = pred.number;
+                    
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'prediction-value';
+                    valueDiv.textContent = `${(pred.probability * 100).toFixed(1)}%`;
+                    
+                    const container = document.createElement('div');
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.alignItems = 'center';
+                    container.appendChild(numberDiv);
+                    container.appendChild(valueDiv);
+                    
+                    field1PredictionNumbers.appendChild(container);
+                });
+            }
+        }
+        
+        // График для поля 2
+        const field2ChartCanvas = document.getElementById('field2PredictionChart');
+        if (field2ChartCanvas) {
+            const ctx2 = field2ChartCanvas.getContext('2d');
+            
+            if (window.field2ChartInstance) {
+                window.field2ChartInstance.destroy();
+            }
+            
+            window.field2ChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['1', '2', '3', '4'],
+                    datasets: [{
+                        label: 'Вероятность выпадения',
+                        data: predictions.field2,
+                        backgroundColor: 'rgba(156, 39, 176, 0.6)',
+                        borderColor: 'rgba(156, 39, 176, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Вероятность'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Отображаем предсказанные числа для поля 2
+            const field2PredictionNumbers = document.getElementById('field2PredictionNumbers');
+            if (field2PredictionNumbers) {
+                field2PredictionNumbers.innerHTML = '';
+                
+                predictions.field2.forEach((prob, index) => {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'prediction-number';
+                    numberDiv.textContent = index + 1;
+                    
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'prediction-value';
+                    valueDiv.textContent = `${(prob * 100).toFixed(1)}%`;
+                    
+                    const container = document.createElement('div');
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.alignItems = 'center';
+                    container.appendChild(numberDiv);
+                    container.appendChild(valueDiv);
+                    
+                    field2PredictionNumbers.appendChild(container);
+                });
+            }
+        }
+    }
+    
+    // Обновление анализа паттернов
+    function updatePatternsAnalysis() {
+        const patternsList = document.getElementById('patternsList');
+        const analyzedDraws = document.getElementById('analyzedDraws');
+        const patternsCount = document.getElementById('patternsCount');
+        const bestPatternAccuracy = document.getElementById('bestPatternAccuracy');
+        
+        if (!patternsList) return;
+        
+        const patterns = analyzePatterns();
+        
+        if (analyzedDraws) {
+            analyzedDraws.textContent = Math.min(history.length, 10);
+        }
+        
+        if (patternsCount) {
+            patternsCount.textContent = patterns.length;
+        }
+        
+        if (bestPatternAccuracy && patterns.length > 0) {
+            bestPatternAccuracy.textContent = `${Math.round(patterns[0].confidence * 100)}%`;
+        }
+        
+        patternsList.innerHTML = '';
+        
+        if (patterns.length === 0) {
+            patternsList.innerHTML = '<div class="pattern-item"><div class="pattern-name">Паттерны не найдены</div><div class="pattern-description">Добавьте больше данных в историю для анализа паттернов.</div></div>';
+            return;
+        }
+        
+        patterns.forEach((pattern, index) => {
+            const patternItem = document.createElement('div');
+            patternItem.className = 'pattern-item';
+            
+            const confidencePercent = Math.round(pattern.confidence * 100);
+            
+            patternItem.innerHTML = `
+                <div class="pattern-name">${pattern.name} <span style="font-size: 0.8rem; color: var(--text-color); opacity: 0.7;">(${confidencePercent}%)</span></div>
+                <div class="pattern-description">${pattern.description}</div>
+                
+                <div class="pattern-numbers">
+                    ${pattern.numbers.map(num => `<div class="pattern-number">${num}</div>`).join('')}
+                </div>
+                
+                <div class="pattern-stat">
+                    <span class="stat-key">Поле 2:</span>
+                    <span class="stat-value">${pattern.field2Prediction}</span>
+                </div>
+                
+                <div class="pattern-confidence">
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                    </div>
+                    <div class="confidence-value">${confidencePercent}%</div>
+                </div>
+                
+                <div class="pattern-history">
+                    Тип: ${pattern.type}
+                </div>
+            `;
+            
+            patternsList.appendChild(patternItem);
+        });
+    }
+    
+    // Обновление ИИ анализа
+    function updateAIAnalysis() {
+        const aiRecommendationContent = document.getElementById('aiRecommendationContent');
+        const aiRecommendation = document.getElementById('aiRecommendation');
+        const aiPatternsList = document.getElementById('aiPatternsList');
+        
+        if (!aiRecommendationContent || !aiRecommendation) return;
+        
+        const aiAnalysis = performAIAnalysis();
+        
+        if (history.length < 10) {
+            aiRecommendationContent.innerHTML = '<p>Для получения интеллектуальных рекомендаций необходимо минимум 10 записей в истории.</p>';
+            return;
+        }
+        
+        if (!aiAnalysis || !aiAnalysis.recommendation) {
+            aiRecommendationContent.innerHTML = '<p>Не удалось выполнить анализ. Попробуйте добавить больше данных.</p>';
+            return;
+        }
+        
+        // Отображаем рекомендацию
+        aiRecommendationContent.innerHTML = `
+            <p><strong>${aiAnalysis.recommendation.reason}</strong></p>
+            <div class="ai-numbers">
+                ${aiAnalysis.recommendation.numbers.map(num => `<div class="ai-number">${num}</div>`).join('')}
+            </div>
+            <div class="ai-confidence">
+                Уверенность: ${Math.round(aiAnalysis.recommendation.confidence * 100)}% | 
+                Метод: ${aiAnalysis.recommendation.method} |
+                Поле 2: ${aiAnalysis.recommendation.field2}
+            </div>
+        `;
+        
+        // Отображаем паттерны ИИ анализа
+        if (aiPatternsList) {
+            aiPatternsList.innerHTML = '';
+            
+            if (aiAnalysis.patterns && aiAnalysis.patterns.length > 0) {
+                aiAnalysis.patterns.forEach(pattern => {
+                    const patternItem = document.createElement('div');
+                    patternItem.className = 'pattern-item';
+                    
+                    const confidencePercent = Math.round(pattern.confidence * 100);
+                    
+                    patternItem.innerHTML = `
+                        <div class="pattern-name">${pattern.name}</div>
+                        <div class="pattern-description">${pattern.description}</div>
+                        
+                        <div class="pattern-numbers">
+                            ${pattern.numbers.map(num => `<div class="pattern-number">${num}</div>`).join('')}
+                        </div>
+                        
+                        <div class="pattern-stat">
+                            <span class="stat-key">Уверенность ИИ:</span>
+                            <span class="stat-value">${confidencePercent}%</span>
+                        </div>
+                    `;
+                    
+                    aiPatternsList.appendChild(patternItem);
+                });
+            }
+        }
+    }
+    
+    // Управление вкладками
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Убираем активный класс у всех вкладок
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Добавляем активный класс текущей вкладке
+            this.classList.add('active');
+            document.getElementById(tabId + 'Tab').classList.add('active');
+            
+            // Обновляем данные на вкладке
+            switch(tabId) {
+                case 'efficiency':
+                    updateCharts();
+                    break;
+                case 'heatmap':
+                    renderHeatmap();
+                    break;
+                case 'predictions':
+                    updatePredictionCharts();
+                    break;
+                case 'patterns':
+                    updatePatternsAnalysis();
+                    break;
+                case 'aiAnalysis':
+                    updateAIAnalysis();
+                    break;
+            }
+        });
+    });
+    
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', async () => {
+        const genBtn = document.getElementById('genBtn');
+        const genBtnBasic = document.getElementById('genBtnBasic');
+        
+        if (genBtn) {
+            genBtn.addEventListener('click', generateNumbers);
+        }
+        
+        if (genBtnBasic) {
+            genBtnBasic.addEventListener('click', () => {
+                // Временное сохранение текущего метода
+                const tempMethod = currentMethod;
+                currentMethod = document.querySelector('.method-btn.active').dataset.method;
+                generateNumbers();
+                // Возвращаем умную генерацию как метод по умолчанию
+                currentMethod = tempMethod;
+            });
+        }
+        
+        if (trainModelBtn) {
+            trainModelBtn.addEventListener('click', trainModel);
+        }
+        
+        // Обработчики для кнопок паттернов
+        const refreshPatternsBtn = document.getElementById('refreshPatternsBtn');
+        const applyPatternsBtn = document.getElementById('applyPatternsBtn');
+        
+        if (refreshPatternsBtn) {
+            refreshPatternsBtn.addEventListener('click', () => {
+                updatePatternsAnalysis();
+                alert('Анализ паттернов обновлен!');
+            });
+        }
+        
+        if (applyPatternsBtn) {
+            applyPatternsBtn.addEventListener('click', () => {
+                const patterns = analyzePatterns();
+                if (patterns.length === 0) {
+                    alert('Паттерны не найдены. Добавьте больше данных в историю.');
+                    return;
+                }
+                
+                const bestPattern = patterns[0];
+                displayNumbers(bestPattern.numbers, bestPattern.field2Prediction, 'patterns');
+                alert(`Применен лучший паттерн: ${bestPattern.name}`);
+            });
+        }
+        
+        updateStats();
+        updateWinStats();
+        renderHistory();
+        
+        // Инициализация матриц чисел
+        initNumberMatrices();
+        
+        // Инициализируем LSTM модель
+        await initModel();
+        
+        // Автоматическое обучение при наличии данных
+        if (history.length >= 15) {
+            setTimeout(trainModel, 1000);
+        }
+        
+        // Инициализируем индикатор уверенности
+        updateConfidenceIndicator();
+        
+        // Обновляем индикатор каждые 30 секунд
+        setInterval(updateConfidenceIndicator, 30000);
+        
+        // Обработчик для инструкции
+        const toggleInstruction = document.getElementById('toggleInstruction');
+        if (toggleInstruction) {
+            toggleInstruction.addEventListener('click', function() {
+                const content = document.getElementById('instructionContent');
+                if (!content) return;
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    this.textContent = '▲';
+                } else {
+                    content.style.display = 'none';
+                    this.textContent = '▼';
+                }
+            });
+        }
+        
+        // Инициализация вкладок
+        updateCharts();
+        renderHeatmap();
+        updatePredictionCharts();
+        updatePatternsAnalysis();
+        updateAIAnalysis();
+    });
+</script>
+</body>
+</html>
