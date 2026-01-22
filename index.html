@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon19.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon14.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="URDS16">
+    <meta name="apple-mobile-web-app-title" content="URDS17">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Улучшенный Рапидо Старт с LSTM</title>
+    <title>Улучшенный Рапидо Старт с LSTM и цепями Маркова</title>
     <!-- Загрузка TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <!-- Загрузка Chart.js для визуализации -->
@@ -34,6 +34,8 @@
             --hybrid-color: #4CAF50;
             --pattern-color: #FF4081;
             --ai-color: #9C27B0;
+            --markov-color: #FF5722;
+            --ensemble-color: #9C27B0;
         }
 
         .dark-mode {
@@ -56,6 +58,8 @@
             --hybrid-color: #66BB6A;
             --pattern-color: #FF6B9D;
             --ai-color: #BA68C8;
+            --markov-color: #FF7043;
+            --ensemble-color: #BA68C8;
         }
 
         * {
@@ -152,6 +156,12 @@
         }
         .number.ai {
             background: var(--ai-color);
+        }
+        .number.markov {
+            background: var(--markov-color);
+        }
+        .number.ensemble {
+            background: var(--ensemble-color);
         }
         button {
             width: 100%;
@@ -312,6 +322,8 @@
         .tag-hybrid { background: var(--hybrid-color); color: white; }
         .tag-pattern { background: var(--pattern-color); color: white; }
         .tag-ai { background: var(--ai-color); color: white; }
+        .tag-markov { background: var(--markov-color); color: white; }
+        .tag-ensemble { background: var(--ensemble-color); color: white; }
         .frequency-bar {
             height: 5px;
             background: #e0e0e0;
@@ -1009,6 +1021,407 @@
             background: #F44336;
             color: white;
         }
+        
+        /* Новые стили для цепей Маркова */
+        .markov-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 10px;
+        }
+        
+        .markov-matrix th, .markov-matrix td {
+            padding: 4px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            min-width: 25px;
+            height: 25px;
+        }
+        
+        .markov-matrix th {
+            background-color: rgba(255, 87, 34, 0.1);
+            font-weight: bold;
+        }
+        
+        .markov-value {
+            font-size: 9px;
+        }
+        
+        .markov-high {
+            background-color: rgba(255, 87, 34, 0.3);
+            font-weight: bold;
+        }
+        
+        .markov-medium {
+            background-color: rgba(255, 87, 34, 0.15);
+        }
+        
+        .markov-low {
+            background-color: rgba(255, 87, 34, 0.05);
+        }
+        
+        .markov-analysis {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 87, 34, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid var(--markov-color);
+        }
+        
+        .dark-mode .markov-analysis {
+            background: rgba(255, 87, 34, 0.1);
+        }
+        
+        .markov-title {
+            color: var(--markov-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .markov-title:before {
+            content: "⛓️";
+            margin-right: 8px;
+        }
+        
+        .markov-state {
+            margin-top: 10px;
+            padding: 8px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .state-name {
+            font-weight: bold;
+            color: var(--markov-color);
+            margin-bottom: 5px;
+        }
+        
+        .transition-probabilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .transition-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            border-radius: 4px;
+            background: var(--keyboard-bg);
+            min-width: 40px;
+        }
+        
+        .transition-number {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .transition-prob {
+            font-size: 10px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+        
+        .markov-visualization {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+            position: relative;
+        }
+        
+        .ensemble-recommendation {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(255, 87, 34, 0.1));
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--ensemble-color);
+        }
+        
+        .dark-mode .ensemble-recommendation {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(255, 87, 34, 0.2));
+        }
+        
+        .ensemble-title {
+            color: var(--ensemble-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ensemble-title:before {
+            content: "⚗️";
+            margin-right: 8px;
+        }
+        
+        .method-comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .method-comparison-item {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .method-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .method-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .markov-chain-visual {
+            width: 100%;
+            height: 150px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .chain-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .chain-state {
+            padding: 10px 15px;
+            background: var(--markov-color);
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 0 10px;
+            position: relative;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .chain-arrow {
+            font-size: 20px;
+            color: var(--markov-color);
+        }
+        
+        .state-probability {
+            font-size: 10px;
+            margin-top: 3px;
+            opacity: 0.8;
+        }
+        
+        .current-state {
+            background: var(--primary-color);
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+        }
+        
+        .predicted-state {
+            background: var(--win-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .markov-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .markov-setting {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .markov-setting label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .markov-setting select,
+        .markov-setting input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .convergence-graph {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+        }
+        
+        /* Новые стили для улучшенной статистики */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-title {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .stat-number {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .stat-trend {
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
+        
+        .trend-up {
+            color: var(--win-color);
+        }
+        
+        .trend-down {
+            color: var(--lose-color);
+        }
+        
+        .trend-neutral {
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+        
+        .stat-chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+        }
+        
+        .stats-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .summary-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .method-performance {
+            margin-top: 20px;
+        }
+        
+        .performance-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .performance-label {
+            width: 120px;
+            font-size: 0.9rem;
+        }
+        
+        .performance-bar-container {
+            flex: 1;
+            height: 20px;
+            background: var(--keyboard-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        
+        .performance-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .performance-value {
+            width: 60px;
+            text-align: right;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .best-method {
+            background: rgba(52, 199, 89, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            border-left: 4px solid var(--selected-color);
+        }
+        
+        .best-method-title {
+            color: var(--selected-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .best-method-title:before {
+            content: "🏆";
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1016,8 +1429,8 @@
     
     <div class="container">
         <div class="card">
-            <h1>Улучшенный Рапидо Старт с LSTM</h1>
-            <p class="subtitle">Гибридный анализ с нейросетевым прогнозированием</p>
+            <h1>Улучшенный Рапидо Старт с LSTM и цепями Маркова</h1>
+            <p class="subtitle">Гибридный анализ с нейросетевым прогнозированием и стохастическим моделированием</p>
         </div>
         
         <!-- Индикатор уверенности модели -->
@@ -1042,7 +1455,7 @@
                     Анализируем данные...
                 </div>
                 <div id="methodRecommendation" class="method-recommendation" style="display: none;">
-                    Рекомендуемый метод: <strong id="recommendedMethod">Гибридный</strong>
+                    Рекомендуемый метод: <strong id="recommendedMethod">Ансамбль</strong>
                     <span id="riskLevel" class="risk-indicator risk-medium">Средний риск</span>
                 </div>
             </div>
@@ -1064,9 +1477,11 @@
                         <li><strong>Карнауха</strong> - комбинация холодных, средних и горячих чисел</li>
                         <li><strong>Равномерный</strong> - равномерное распределение по диапазонам</li>
                         <li><strong>LSTM</strong> - прогноз с помощью нейросети</li>
+                        <li><strong>Цепь Маркова</strong> - стохастическое моделирование последовательностей</li>
                         <li><strong>Гибридный</strong> - комбинация холодных чисел и LSTM</li>
                         <li><strong>Паттерны</strong> - анализ логических последовательностей</li>
                         <li><strong>ИИ Анализ</strong> - интеллектуальный анализ паттернов</li>
+                        <li><strong>Ансамбль</strong> - комбинация всех лучших методов</li>
                     </ul>
                 </div>
                 
@@ -1088,29 +1503,31 @@
                     <ul>
                         <li><strong>Эффективность</strong> - ROI и процент выигрышей по методам</li>
                         <li><strong>Тепловая карта</strong> - совместная встречаемость чисел</li>
-                        <li><strong>Прогнозы</strong> - предсказания LSTM модели</li>
+                        <li><strong>Прогнозы</strong> - предсказания LSTM модели и цепей Маркова</li>
                         <li><strong>Паттерны</strong> - логические последовательности и тренды</li>
                         <li><strong>ИИ Анализ</strong> - интеллектуальные рекомендации</li>
+                        <li><strong>Цепи Маркова</strong> - стохастический анализ переходов</li>
                     </ul>
                 </div>
                 
                 <div class="instruction-step">
                     <h3>4. Обучение модели</h3>
-                    <p>Для работы LSTM модели нужно:</p>
+                    <p>Для работы LSTM модели и цепей Маркова нужно:</p>
                     <ul>
                         <li>Минимум 15 записей в истории</li>
-                        <li>Нажмите "Обучить модель" для обучения</li>
-                        <li>Модель автоматически обучается при добавлении новых данных</li>
+                        <li>Нажмите "Обучить модель" для обучения LSTM</li>
+                        <li>Цепи Маркова обучаются автоматически</li>
                     </ul>
                 </div>
                 
                 <div class="instruction-step">
-                    <h3>5. Интеллектуальный анализ</h3>
-                    <p>Программа анализирует:</p>
+                    <h3>5. Цепи Маркова</h3>
+                    <p>Новая система анализа, которая:</p>
                     <ul>
-                        <li><strong>Серии выигрышей/проигрышей</strong> - определяет благоприятные периоды</li>
-                        <li><strong>Уверенность модели</strong> - показывает, насколько надежен прогноз</li>
-                        <li><strong>Риск ставки</strong> - оценивает вероятность выигрыша</li>
+                        <li><strong>Анализирует переходы</strong> - как числа меняются от тиража к тиражу</li>
+                        <li><strong>Строит матрицу вероятностей</strong> - вероятность перехода от одного числа к другому</li>
+                        <li><strong>Предсказывает следующее состояние</strong> - на основе текущих чисел и вероятностей переходов</li>
+                        <li><strong>Определяет стационарное распределение</strong> - равновесное состояние системы</li>
                     </ul>
                 </div>
                 
@@ -1131,8 +1548,8 @@
                 </div>
                 
                 <div class="instruction-tip">
-                    <p><strong>💡 Совет:</strong> Для лучших результатов используйте ИИ Анализ и регулярно обновляйте историю розыгрышей. Анализ паттернов работает лучше всего при наличии 20+ записей в истории.</p>
-                    <p><strong>⚠️ Важно:</strong> Генерируйте числа только когда индикатор показывает "Высокая вероятность выигрыша".</p>
+                    <p><strong>💡 Совет:</strong> Для лучших результатов используйте Ансамбль-анализ, который комбинирует LSTM, цепи Маркова и другие методы. Анализ цепей Маркова работает лучше всего при наличии 20+ записей в истории.</p>
+                    <p><strong>⚠️ Важно:</strong> Генерируйте числа когда индикатор показывает "Высокая вероятность выигрыша" и цепь Маркова сходится к стационарному распределению.</p>
                 </div>
             </div>
         </div>
@@ -1145,10 +1562,11 @@
                 <div class="method-btn" data-method="karnaugh">Карнауха</div>
                 <div class="method-btn" data-method="uniform">Равномерный</div>
                 <div class="method-btn" data-method="lstm">LSTM</div>
+                <div class="method-btn" data-method="markov">Марков</div>
                 <div class="method-btn" data-method="patterns">Паттерны</div>
                 <div class="method-btn" data-method="ai">ИИ Анализ</div>
-                <div class="method-btn active" data-method="hybrid">Гибридный</div>
-                <div class="method-btn" data-method="smart">Умная генерация</div>
+                <div class="method-btn" data-method="hybrid">Гибридный</div>
+                <div class="method-btn active" data-method="ensemble">Ансамбль</div>
             </div>
             
             <div id="trainingStatus" class="training-status">
@@ -1156,20 +1574,22 @@
                 <div class="training-progress">
                     <div id="trainingProgress" class="training-progress-bar"></div>
                 </div>
-                <div class="model-info">Точность: <span id="modelAccuracy">0%</span></div>
+                <div class="model-info">Точность LSTM: <span id="modelAccuracy">0%</span></div>
+                <div class="model-info">Точность Маркова: <span id="markovAccuracy">0%</span></div>
                 <div class="model-info">Тиражей: <span id="modelDataSize">0</span></div>
-                <button id="trainModelBtn" class="train-btn">Обучить модель</button>
+                <button id="trainModelBtn" class="train-btn">Обучить LSTM модель</button>
+                <button id="trainMarkovBtn" class="train-btn" style="background: var(--markov-color) !important; margin-top: 5px;">Обновить цепи Маркова</button>
             </div>
             
             <p>Поле 1 (8 из 20):</p>
             <div class="numbers" id="field1"></div>
             <p>Поле 2 (1 из 4):</p>
             <div class="numbers" id="field2"></div>
-            <button id="genBtn" class="smart-generate-btn">Умная генерация</button>
+            <button id="genBtn" class="smart-generate-btn">Умная генерация (Ансамбль)</button>
             <button id="genBtnBasic" class="secondary">Обычная генерация</button>
         </div>
         
-                <div class="card">
+        <div class="card">
             <h2>Добавить историю розыгрыша</h2>
             
             <div class="draw-inputs">
@@ -1191,6 +1611,7 @@
                     <button class="quick-select-btn" data-action="hot1">Горячие</button>
                     <button class="quick-select-btn" data-action="cold1">Холодные</button>
                     <button class="quick-select-btn" data-action="patternFill1">По паттернам</button>
+                    <button class="quick-select-btn" data-action="markovFill1">По Маркову</button>
                     <button class="quick-select-btn auto-fill-btn" data-action="aiFill1">ИИ Заполнение</button>
                 </div>
                 
@@ -1214,6 +1635,7 @@
                 <div class="quick-select-buttons">
                     <button class="quick-select-btn" data-action="clear2">Очистить</button>
                     <button class="quick-select-btn" data-action="patternFill2">По паттернам</button>
+                    <button class="quick-select-btn" data-action="markovFill2">По Маркову</button>
                     <button class="quick-select-btn auto-fill-btn" data-action="aiFill2">ИИ Заполнение</button>
                 </div>
                 
@@ -1242,7 +1664,41 @@
         
         <div class="card">
             <h2>Статистика выигрышей</h2>
-            <div class="win-stats" id="winStats"></div>
+            <div class="stats-summary" id="statsSummary">
+                <div class="summary-item">
+                    <div class="summary-value" id="totalBets">0</div>
+                    <div class="summary-label">Всего ставок</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value win" id="totalWins">0</div>
+                    <div class="summary-label">Выигрышей</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="totalBalance">0 ₽</div>
+                    <div class="summary-label">Баланс</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="winRate">0%</div>
+                    <div class="summary-label">Процент выигрышей</div>
+                </div>
+            </div>
+            
+            <div class="best-method" id="bestMethodContainer" style="display: none;">
+                <div class="best-method-title">Лучший метод</div>
+                <div id="bestMethodInfo">Загрузка...</div>
+            </div>
+            
+            <div class="stats-grid" id="winStatsGrid">
+                <!-- Статистика по методам будет здесь -->
+            </div>
+            
+            <div class="method-performance" id="methodPerformance">
+                <!-- Производительность методов будет здесь -->
+            </div>
+            
+            <div class="stat-chart-container">
+                <canvas id="winStatsChart"></canvas>
+            </div>
         </div>
         
         <div class="card">
@@ -1252,8 +1708,10 @@
                 <div class="tab active" data-tab="efficiency">Эффективность</div>
                 <div class="tab" data-tab="heatmap">Тепловая карта</div>
                 <div class="tab" data-tab="predictions">Прогнозы LSTM</div>
+                <div class="tab" data-tab="markovAnalysis">Цепи Маркова</div>
                 <div class="tab" data-tab="patterns">Анализ паттернов</div>
                 <div class="tab" data-tab="aiAnalysis">ИИ Анализ</div>
+                <div class="tab" data-tab="ensemble">Ансамбль</div>
             </div>
             
             <div class="tab-content active" id="efficiencyTab">
@@ -1289,6 +1747,75 @@
                 </div>
                 <div class="info-box">
                     Прогноз вероятности выпадения чисел в следующем тираже на основе LSTM модели.
+                </div>
+            </div>
+            
+            <div class="tab-content" id="markovAnalysisTab">
+                <div class="markov-analysis">
+                    <div class="markov-title">Анализ цепей Маркова</div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Порядок цепи:</span>
+                        <span class="stat-value" id="markovOrder">1</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Состояний проанализировано:</span>
+                        <span class="stat-value" id="markovStatesCount">0</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Точность прогноза:</span>
+                        <span class="stat-value" id="markovPredictionAccuracy">0%</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Сходимость цепи:</span>
+                        <span class="stat-value" id="markovConvergence">Не определена</span>
+                    </div>
+                    
+                    <div class="markov-settings">
+                        <div class="markov-setting">
+                            <label for="markovOrderSelect">Порядок цепи:</label>
+                            <select id="markovOrderSelect">
+                                <option value="1">1 (базовый)</option>
+                                <option value="2">2 (расширенный)</option>
+                                <option value="3">3 (глубокий)</option>
+                            </select>
+                        </div>
+                        <div class="markov-setting">
+                            <label for="smoothingFactor">Сглаживание:</label>
+                            <select id="smoothingFactor">
+                                <option value="0.1">Низкое</option>
+                                <option value="0.05" selected>Среднее</option>
+                                <option value="0.01">Высокое</option>
+                            </select>
+                        </div>
+                        <div class="markov-setting">
+                            <label for="predictionMethod">Метод прогноза:</label>
+                            <select id="predictionMethod">
+                                <option value="mostProbable">Наиболее вероятный</option>
+                                <option value="weighted" selected>Взвешенный</option>
+                                <option value="monteCarlo">Монте-Карло</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="markov-chain-visual">
+                        <div class="chain-container" id="markovChainVisual"></div>
+                    </div>
+                    
+                    <button id="updateMarkovBtn" class="pattern-btn" style="background: var(--markov-color); margin-top: 10px;">Обновить анализ</button>
+                    <button id="applyMarkovBtn" class="pattern-btn secondary" style="margin-top: 10px;">Применить прогноз</button>
+                </div>
+                
+                <div class="info-box">
+                    Цепи Маркова анализируют вероятности переходов между состояниями (числами) в последовательных тиражах. 
+                    Это позволяет моделировать вероятностные процессы и предсказывать следующие числа на основе текущего состояния.
+                </div>
+                
+                <h3 style="margin-top: 20px;">Матрица переходов (поле 1)</h3>
+                <div class="markov-matrix-container" id="markovMatrixContainer"></div>
+                
+                <div class="info-box">
+                    Матрица показывает вероятность перехода от числа в строке к числу в столбце. 
+                    Более темные ячейки указывают на более высокие вероятности перехода.
                 </div>
             </div>
             
@@ -1356,6 +1883,33 @@
                     ИИ анализ использует машинное обучение для выявления сложных паттернов и предоставляет интеллектуальные рекомендации на основе всех доступных данных.
                 </div>
             </div>
+            
+            <div class="tab-content" id="ensembleTab">
+                <div class="ensemble-recommendation" id="ensembleRecommendation">
+                    <div class="ensemble-title">Ансамбль-анализ</div>
+                    <p>Комбинированный анализ с использованием LSTM, цепей Маркова и других методов.</p>
+                    <div id="ensembleRecommendationContent"></div>
+                </div>
+                
+                <div class="method-comparison" id="methodComparison">
+                    <!-- Сравнение методов будет здесь -->
+                </div>
+                
+                <div class="info-box">
+                    Ансамбль-анализ комбинирует несколько методов машинного обучения для получения более точных прогнозов. 
+                    Каждому методу присваивается вес на основе его исторической точности.
+                </div>
+                
+                <h3 style="margin-top: 20px;">График сходимости</h3>
+                <div class="chart-container">
+                    <canvas id="convergenceChart"></canvas>
+                </div>
+                
+                <div class="info-box">
+                    График показывает, как различные методы сходятся к предсказанию с увеличением количества данных. 
+                    Методы с более быстрой сходимостью считаются более надежными.
+                </div>
+            </div>
         </div>
         
         <div class="card">
@@ -1386,6 +1940,8 @@
         updatePredictionCharts();
         updatePatternsAnalysis();
         updateAIAnalysis();
+        updateMarkovAnalysis();
+        updateEnsembleAnalysis();
         updateConfidenceIndicator();
     };
     applyTheme(localStorage.getItem('darkMode') === 'true');
@@ -1394,22 +1950,44 @@
     let history = JSON.parse(localStorage.getItem('rapidoHistory') || '[]');
     let bets = JSON.parse(localStorage.getItem('rapidoBets') || '[]');
     
-    // Статистика выигрышей
-    let winStats = JSON.parse(localStorage.getItem('rapidoWinStats') || JSON.stringify({
-        cold: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        ogneva: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        karnaugh: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        uniform: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        lstm: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        hybrid: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        patterns: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        ai: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-        smart: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 }
-    }));
+    // Статистика выигрышей - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    let winStats = JSON.parse(localStorage.getItem('rapidoWinStats') || '{}');
     
-    if (typeof winStats === 'string') {
-        winStats = JSON.parse(winStats);
+    // Инициализация статистики, если она пустая
+    function initWinStats() {
+        const defaultStats = {
+            cold: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            ogneva: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            karnaugh: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            uniform: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            lstm: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            markov: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            hybrid: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            patterns: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            ai: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() },
+            ensemble: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0, lastUpdate: new Date().toISOString() }
+        };
+        
+        // Проверяем, есть ли все методы в статистике
+        for (const method in defaultStats) {
+            if (!winStats[method]) {
+                winStats[method] = { ...defaultStats[method] };
+            } else {
+                // Убедимся, что все поля есть
+                const requiredFields = ['bets', 'wins', 'spent', 'won', 'balance', 'lastUpdate'];
+                for (const field of requiredFields) {
+                    if (typeof winStats[method][field] === 'undefined') {
+                        winStats[method][field] = field === 'lastUpdate' ? new Date().toISOString() : 0;
+                    }
+                }
+            }
+        }
+        
+        saveWinStats();
     }
+    
+    // Инициализируем статистику при загрузке
+    initWinStats();
 
     // Таблица выигрышей
     const prizeTable = {
@@ -1421,7 +1999,16 @@
         '6,0': { amount: 150, label: '150 ₽' },
         '5,1': { amount: 100, label: '100 ₽' },
         '5,0': { amount: 50, label: '50 ₽' },
-        '4,1': { amount: 25, label: '25 ₽' }
+        '4,1': { amount: 25, label: '25 ₽' },
+        '4,0': { amount: 0, label: 'Нет выигрыша' },
+        '3,1': { amount: 0, label: 'Нет выигрыша' },
+        '3,0': { amount: 0, label: 'Нет выигрыша' },
+        '2,1': { amount: 0, label: 'Нет выигрыша' },
+        '2,0': { amount: 0, label: 'Нет выигрыша' },
+        '1,1': { amount: 0, label: 'Нет выигрыша' },
+        '1,0': { amount: 0, label: 'Нет выигрыша' },
+        '0,1': { amount: 0, label: 'Нет выигрыша' },
+        '0,0': { amount: 0, label: 'Нет выигрыша' }
     };
 
     // Сохраняем ставки
@@ -1630,6 +2217,9 @@
                     case 'patternFill1':
                         fillByPatternsField1();
                         break;
+                    case 'markovFill1':
+                        fillByMarkovField1();
+                        break;
                     case 'aiFill1':
                         fillByAIField1();
                         break;
@@ -1638,6 +2228,9 @@
                         break;
                     case 'patternFill2':
                         fillByPatternsField2();
+                        break;
+                    case 'markovFill2':
+                        fillByMarkovField2();
                         break;
                     case 'aiFill2':
                         fillByAIField2();
@@ -1697,6 +2290,43 @@
         }
     }
     
+    // Заполнение по Маркову для поля 1
+    function fillByMarkovField1() {
+        const markovAnalysis = performMarkovAnalysis();
+        if (!markovAnalysis || !markovAnalysis.predictions) {
+            alert('Не удалось выполнить анализ цепей Маркова. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        const predictions = markovAnalysis.predictions.field1;
+        // Выбираем 8 чисел с наибольшей вероятностью
+        const topNumbers = predictions
+            .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+            .sort((a, b) => b.probability - a.probability)
+            .slice(0, 8)
+            .map(item => item.number);
+        
+        selectedField1 = new Set(topNumbers);
+        createField1Matrix();
+    }
+    
+    // Заполнение по Маркову для поля 2
+    function fillByMarkovField2() {
+        const markovAnalysis = performMarkovAnalysis();
+        if (!markovAnalysis || !markovAnalysis.predictions) {
+            alert('Не удалось выполнить анализ цепей Маркова. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        const predictions = markovAnalysis.predictions.field2;
+        // Выбираем число с наибольшей вероятностью
+        const maxProb = Math.max(...predictions);
+        const selectedNumber = predictions.indexOf(maxProb) + 1;
+        
+        selectedField2 = selectedNumber;
+        createField2Matrix();
+    }
+    
     // Заполнение по ИИ анализу для поля 1
     function fillByAIField1() {
         const aiAnalysis = performAIAnalysis();
@@ -1725,8 +2355,10 @@
     
     // Расчет уверенности модели на основе энтропии
     async function getModelConfidence() {
-        const predictions = await getLSTMPredictions();
-        if (!predictions) return 0;
+        const lstmPredictions = await getLSTMPredictions();
+        const markovAnalysis = performMarkovAnalysis();
+        
+        if (!lstmPredictions && !markovAnalysis) return 0;
 
         function entropy(probs) {
             let e = 0;
@@ -1738,26 +2370,40 @@
             return e;
         }
 
-        // Нормализуем вероятности поля 1
-        const sum1 = predictions.field1.reduce((a, b) => a + b, 0);
-        if (sum1 === 0) return 0;
-        
-        const normalized1 = predictions.field1.map(p => p / sum1);
-        const maxEntropy1 = Math.log(predictions.field1.length);
-        const entropy1 = entropy(normalized1);
-        const confidence1 = 1 - (entropy1 / maxEntropy1);
+        let confidence = 0;
+        let methodCount = 0;
 
-        // Нормализуем вероятности поля 2
-        const sum2 = predictions.field2.reduce((a, b) => a + b, 0);
-        if (sum2 === 0) return 0;
-        
-        const normalized2 = predictions.field2.map(p => p / sum2);
-        const maxEntropy2 = Math.log(predictions.field2.length);
-        const entropy2 = entropy(normalized2);
-        const confidence2 = 1 - (entropy2 / maxEntropy2);
+        // LSTM уверенность
+        if (lstmPredictions) {
+            const sum1 = lstmPredictions.field1.reduce((a, b) => a + b, 0);
+            if (sum1 > 0) {
+                const normalized1 = lstmPredictions.field1.map(p => p / sum1);
+                const maxEntropy1 = Math.log(lstmPredictions.field1.length);
+                const entropy1 = entropy(normalized1);
+                const confidence1 = 1 - (entropy1 / maxEntropy1);
+                
+                const sum2 = lstmPredictions.field2.reduce((a, b) => a + b, 0);
+                if (sum2 > 0) {
+                    const normalized2 = lstmPredictions.field2.map(p => p / sum2);
+                    const maxEntropy2 = Math.log(lstmPredictions.field2.length);
+                    const entropy2 = entropy(normalized2);
+                    const confidence2 = 1 - (entropy2 / maxEntropy2);
+                    
+                    confidence += (confidence1 + confidence2) / 2;
+                    methodCount++;
+                }
+            }
+        }
 
-        // Общая уверенность - среднее арифметическое
-        const overallConfidence = (confidence1 + confidence2) / 2;
+        // Марковская уверенность
+        if (markovAnalysis && markovAnalysis.convergence) {
+            const markovConfidence = Math.min(1, markovAnalysis.convergence * 1.5);
+            confidence += markovConfidence;
+            methodCount++;
+        }
+
+        // Средняя уверенность
+        const overallConfidence = methodCount > 0 ? confidence / methodCount : 0;
         
         // Ограничиваем значения от 0 до 1
         return Math.max(0, Math.min(1, overallConfidence));
@@ -1882,16 +2528,16 @@
         }
         
         // Определяем рекомендуемый метод
-        let recommendedMethod = "hybrid";
+        let recommendedMethod = "ensemble";
         let riskLevel = "medium";
         let riskClass = "risk-medium";
         
         if (confidence > 0.7 && streakAnalysis.streakType === "hot") {
-            recommendedMethod = "lstm";
+            recommendedMethod = "ensemble";
             riskLevel = "низкий";
             riskClass = "risk-low";
         } else if (confidence > 0.5 && streakAnalysis.streakType === "hot") {
-            recommendedMethod = "hybrid";
+            recommendedMethod = "markov";
             riskLevel = "средний";
             riskClass = "risk-medium";
         } else if (confidence > 0.3) {
@@ -1914,12 +2560,14 @@
             
             let methodName = "";
             switch(recommendedMethod) {
+                case 'ensemble': methodName = "Ансамбль"; break;
+                case 'markov': methodName = "Цепи Маркова"; break;
                 case 'lstm': methodName = "LSTM Прогноз"; break;
                 case 'hybrid': methodName = "Гибридный"; break;
                 case 'patterns': methodName = "Паттерны"; break;
                 case 'ai': methodName = "ИИ Анализ"; break;
                 case 'cold': methodName = "Холодные числа"; break;
-                default: methodName = "Гибридный";
+                default: methodName = "Ансамбль";
             }
             
             recommendedMethodEl.textContent = methodName;
@@ -1947,7 +2595,7 @@
         const analysis = await updateConfidenceIndicator();
         
         if (!analysis) {
-            return generateHybridNumbers();
+            return generateEnsembleNumbers();
         }
         
         const { confidence, streakAnalysis, recommendedMethod } = analysis;
@@ -1977,6 +2625,12 @@
         // Генерируем числа с учетом рекомендованного метода
         let generatedNumbers;
         switch(recommendedMethod) {
+            case 'ensemble':
+                generatedNumbers = await generateEnsembleNumbers();
+                break;
+            case 'markov':
+                generatedNumbers = await generateMarkovNumbers();
+                break;
             case 'lstm':
                 generatedNumbers = await generateLSTMNumbers();
                 break;
@@ -1993,13 +2647,15 @@
                 generatedNumbers = generateColdNumbers();
                 break;
             default:
-                generatedNumbers = await generateHybridNumbers();
+                generatedNumbers = await generateEnsembleNumbers();
         }
         
         // Показываем сообщение
         if (message) {
             alert(message + "\n\nИспользован метод: " + 
-                  (recommendedMethod === 'lstm' ? 'LSTM Прогноз' :
+                  (recommendedMethod === 'ensemble' ? 'Ансамбль' :
+                   recommendedMethod === 'markov' ? 'Цепи Маркова' :
+                   recommendedMethod === 'lstm' ? 'LSTM Прогноз' :
                    recommendedMethod === 'hybrid' ? 'Гибридный' :
                    recommendedMethod === 'patterns' ? 'Паттерны' :
                    recommendedMethod === 'ai' ? 'ИИ Анализ' : 'Холодные числа'));
@@ -2009,7 +2665,7 @@
     }
     
     // --- Улучшенные методы генерации ---
-    let currentMethod = 'smart';
+    let currentMethod = 'ensemble';
     
     // Переключение методов
     document.querySelectorAll('.method-btn').forEach(btn => {
@@ -2021,8 +2677,8 @@
             // Обновляем текст кнопки генерации
             const genBtn = document.getElementById('genBtn');
             if (genBtn) {
-                if (currentMethod === 'smart') {
-                    genBtn.textContent = 'Умная генерация';
+                if (currentMethod === 'ensemble') {
+                    genBtn.textContent = 'Умная генерация (Ансамбль)';
                     genBtn.className = 'smart-generate-btn';
                 } else {
                     genBtn.textContent = 'Сгенерировать (' + btn.textContent + ')';
@@ -2044,20 +2700,21 @@
         let methodToUse = currentMethod;
         
         // Для умной генерации
-        if (currentMethod === 'smart') {
+        if (currentMethod === 'ensemble') {
             generatedNumbers = await smartGenerate();
             if (!generatedNumbers) {
                 return; // Пользователь отказался от генерации
             }
-            methodToUse = 'smart';
+            methodToUse = 'ensemble';
         } 
         // Для методов, требующих асинхронной обработки
         else if (currentMethod === 'hybrid' || currentMethod === 'lstm' || 
-                 currentMethod === 'patterns' || currentMethod === 'ai') {
+                 currentMethod === 'markov' || currentMethod === 'patterns' || 
+                 currentMethod === 'ai' || currentMethod === 'ensemble') {
             
-            // Проверяем историю для LSTM
-            if (currentMethod === 'lstm' && history.length < 10) {
-                alert("⚠️ Для LSTM нужно минимум 10 тиражей. Используем гибридный метод.");
+            // Проверяем историю для LSTM и Маркова
+            if ((currentMethod === 'lstm' || currentMethod === 'markov') && history.length < 10) {
+                alert("⚠️ Для этого метода нужно минимум 10 тиражей. Используем гибридный метод.");
                 generatedNumbers = await generateHybridNumbers();
                 methodToUse = 'hybrid';
             } else {
@@ -2085,11 +2742,17 @@
                             generationPromise = generateLSTMNumbers();
                         }
                         break;
+                    case 'markov':
+                        generationPromise = generateMarkovNumbers();
+                        break;
                     case 'patterns':
                         generationPromise = generatePatternNumbers();
                         break;
                     case 'ai':
                         generationPromise = generateAINumbers();
+                        break;
+                    case 'ensemble':
+                        generationPromise = generateEnsembleNumbers();
                         break;
                 }
                 
@@ -2125,7 +2788,8 @@
                 field1: [...generatedNumbers.nums1],
                 field2: generatedNumbers.num2
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            status: 'active' // Статус ставки: active, won, lost
         };
         
         bets.push(bet);
@@ -2134,13 +2798,17 @@
         // Отображаем числа
         displayNumbers(generatedNumbers.nums1, generatedNumbers.num2, methodToUse);
         
-        // Увеличиваем счетчик ставки
+        // Увеличиваем счетчик ставки - ИСПРАВЛЕННАЯ ЛОГИКА
         if(winStats[methodToUse]) {
             winStats[methodToUse].bets++;
-            winStats[methodToUse].spent += 100;
+            winStats[methodToUse].spent += 25; // Стоимость билета Рапидо (исправлено с 100 на 25)
             winStats[methodToUse].balance = winStats[methodToUse].won - winStats[methodToUse].spent;
-            updateWinStats();
+            winStats[methodToUse].lastUpdate = new Date().toISOString();
+            saveWinStats();
         }
+        
+        // Обновляем статистику
+        updateWinStats();
         
         // Автоматически заполняем номер тиража
         const drawIdInput = document.getElementById('drawId');
@@ -2158,10 +2826,11 @@
             'karnaugh': 'Метод Карнауха',
             'uniform': 'Равномерное распределение',
             'lstm': 'LSTM Прогноз',
+            'markov': 'Цепи Маркова',
             'hybrid': 'Гибридный метод',
             'patterns': 'Анализ паттернов',
             'ai': 'ИИ Анализ',
-            'smart': 'Умная генерация'
+            'ensemble': 'Ансамбль-анализ'
         };
         
         let info = `✅ Сгенерировано методом: ${methodNames[method] || method}\n\n`;
@@ -2709,7 +3378,7 @@
                     if (num >= 1 && num <= 20) targetVector[num-1] = 1;
                 });
                 
-                if (targetDraw.field2 >= 1 && targetDraw.field2 <= 4) {
+                if (targetDraw.field2 >= 1 && draw.field2 <= 4) {
                     targetVector[20 + targetDraw.field2 - 1] = 1;
                 }
                 
@@ -2888,6 +3557,712 @@
         }
     }
     
+    // --- ЦЕПИ МАРКОВА (НОВАЯ СИСТЕМА) ---
+    let markovModel = {
+        field1: {
+            transitionMatrix: null,
+            order: 1,
+            states: new Set(),
+            stationaryDistribution: null,
+            convergence: 0
+        },
+        field2: {
+            transitionMatrix: null,
+            order: 1,
+            states: new Set(),
+            stationaryDistribution: null,
+            convergence: 0
+        }
+    };
+    
+    // Инициализация цепей Маркова
+    function initMarkovModel() {
+        // Загружаем сохраненную модель, если есть
+        const savedMarkov = localStorage.getItem('markovModel');
+        if (savedMarkov) {
+            try {
+                const parsed = JSON.parse(savedMarkov);
+                markovModel = parsed;
+                
+                // Восстанавливаем Sets
+                markovModel.field1.states = new Set(markovModel.field1.states || []);
+                markovModel.field2.states = new Set(markovModel.field2.states || []);
+                
+                // Восстанавливаем матрицы
+                if (markovModel.field1.transitionMatrix) {
+                    markovModel.field1.transitionMatrix = markovModel.field1.transitionMatrix.map(row => 
+                        row.map(cell => cell || 0)
+                    );
+                }
+                if (markovModel.field2.transitionMatrix) {
+                    markovModel.field2.transitionMatrix = markovModel.field2.transitionMatrix.map(row => 
+                        row.map(cell => cell || 0)
+                    );
+                }
+                
+                console.log('Модель Маркова загружена из localStorage');
+            } catch (e) {
+                console.error('Ошибка загрузки модели Маркова:', e);
+                // Создаем новую модель при ошибке
+                createNewMarkovModel();
+            }
+        } else {
+            createNewMarkovModel();
+        }
+        
+        // Обновляем точность Маркова
+        updateMarkovAccuracy();
+    }
+    
+    // Создание новой модели Маркова
+    function createNewMarkovModel() {
+        markovModel = {
+            field1: {
+                transitionMatrix: Array(20).fill().map(() => Array(20).fill(0)),
+                order: 1,
+                states: new Set(),
+                stationaryDistribution: Array(20).fill(1/20),
+                convergence: 0
+            },
+            field2: {
+                transitionMatrix: Array(4).fill().map(() => Array(4).fill(0)),
+                order: 1,
+                states: new Set(),
+                stationaryDistribution: Array(4).fill(0.25),
+                convergence: 0
+            }
+        };
+    }
+    
+    // Обучение цепей Маркова
+    function trainMarkovModel() {
+        if (history.length < 2) {
+            console.log('Недостаточно данных для обучения цепей Маркова');
+            return;
+        }
+        
+        const order = parseInt(document.getElementById('markovOrderSelect')?.value || 1);
+        const smoothing = parseFloat(document.getElementById('smoothingFactor')?.value || 0.05);
+        
+        // Обучаем модель для поля 1
+        trainMarkovField(1, order, smoothing);
+        
+        // Обучаем модель для поля 2
+        trainMarkovField(2, order, smoothing);
+        
+        // Рассчитываем стационарные распределения
+        calculateStationaryDistributions();
+        
+        // Рассчитываем сходимость
+        calculateConvergence();
+        
+        // Сохраняем модель
+        saveMarkovModel();
+        
+        console.log('Модель Маркова обучена');
+        
+        // Обновляем точность
+        updateMarkovAccuracy();
+        
+        // Обновляем отображение
+        updateMarkovAnalysis();
+    }
+    
+    // Обучение для конкретного поля
+    function trainMarkovField(field, order, smoothing) {
+        const isField1 = field === 1;
+        const size = isField1 ? 20 : 4;
+        const matrix = Array(size).fill().map(() => Array(size).fill(smoothing)); // Сглаживание Лапласа
+        
+        let totalTransitions = 0;
+        
+        // Собираем статистику переходов
+        for (let i = order; i < history.length; i++) {
+            const currentDraw = history[i];
+            const prevDraw = history[i - 1];
+            
+            if (isField1) {
+                // Для поля 1: анализируем переходы каждого числа
+                for (const currentNum of currentDraw.field1) {
+                    for (const prevNum of prevDraw.field1) {
+                        if (currentNum >= 1 && currentNum <= size && 
+                            prevNum >= 1 && prevNum <= size) {
+                            matrix[prevNum - 1][currentNum - 1]++;
+                            totalTransitions++;
+                        }
+                    }
+                }
+            } else {
+                // Для поля 2: анализируем переход одного числа
+                const currentNum = currentDraw.field2;
+                const prevNum = prevDraw.field2;
+                
+                if (currentNum >= 1 && currentNum <= size && 
+                    prevNum >= 1 && prevNum <= size) {
+                    matrix[prevNum - 1][currentNum - 1]++;
+                    totalTransitions++;
+                }
+            }
+        }
+        
+        // Нормализуем матрицу (сумма каждой строки = 1)
+        for (let i = 0; i < size; i++) {
+            const rowSum = matrix[i].reduce((a, b) => a + b, 0);
+            if (rowSum > 0) {
+                for (let j = 0; j < size; j++) {
+                    matrix[i][j] /= rowSum;
+                }
+            } else {
+                // Если в строке нет данных, используем равномерное распределение
+                for (let j = 0; j < size; j++) {
+                    matrix[i][j] = 1 / size;
+                }
+            }
+        }
+        
+        // Сохраняем матрицу переходов
+        if (isField1) {
+            markovModel.field1.transitionMatrix = matrix;
+            markovModel.field1.order = order;
+            
+            // Записываем состояния
+            const states = new Set();
+            history.forEach(draw => {
+                draw.field1.forEach(num => {
+                    if (num >= 1 && num <= 20) states.add(num);
+                });
+            });
+            markovModel.field1.states = states;
+        } else {
+            markovModel.field2.transitionMatrix = matrix;
+            markovModel.field2.order = order;
+            
+            // Записываем состояния
+            const states = new Set();
+            history.forEach(draw => {
+                if (draw.field2 >= 1 && draw.field2 <= 4) {
+                    states.add(draw.field2);
+                }
+            });
+            markovModel.field2.states = states;
+        }
+    }
+    
+    // Расчет стационарного распределения
+    function calculateStationaryDistributions() {
+        // Для поля 1
+        markovModel.field1.stationaryDistribution = 
+            findStationaryDistribution(markovModel.field1.transitionMatrix);
+        
+        // Для поля 2
+        markovModel.field2.stationaryDistribution = 
+            findStationaryDistribution(markovModel.field2.transitionMatrix);
+    }
+    
+    // Алгоритм нахождения стационарного распределения (степенной метод)
+    function findStationaryDistribution(matrix, epsilon = 1e-8, maxIterations = 1000) {
+        const size = matrix.length;
+        let distribution = Array(size).fill(1 / size);
+        
+        for (let iter = 0; iter < maxIterations; iter++) {
+            const newDistribution = Array(size).fill(0);
+            
+            // Умножение распределения на матрицу переходов
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    newDistribution[j] += distribution[i] * matrix[i][j];
+                }
+            }
+            
+            // Проверка сходимости
+            let maxDiff = 0;
+            for (let i = 0; i < size; i++) {
+                maxDiff = Math.max(maxDiff, Math.abs(newDistribution[i] - distribution[i]));
+            }
+            
+            distribution = newDistribution;
+            
+            if (maxDiff < epsilon) {
+                console.log(`Стационарное распределение найдено за ${iter + 1} итераций`);
+                break;
+            }
+        }
+        
+        return distribution;
+    }
+    
+    // Расчет сходимости цепи
+    function calculateConvergence() {
+        // Сходимость для поля 1
+        const stationary1 = markovModel.field1.stationaryDistribution;
+        const matrix1 = markovModel.field1.transitionMatrix;
+        
+        if (stationary1 && matrix1) {
+            let convergence1 = 0;
+            for (let i = 0; i < 20; i++) {
+                let rowConvergence = 0;
+                for (let j = 0; j < 20; j++) {
+                    rowConvergence += Math.abs(matrix1[i][j] - stationary1[j]);
+                }
+                convergence1 += rowConvergence / 20;
+            }
+            markovModel.field1.convergence = 1 - (convergence1 / 20);
+        }
+        
+        // Сходимость для поля 2
+        const stationary2 = markovModel.field2.stationaryDistribution;
+        const matrix2 = markovModel.field2.transitionMatrix;
+        
+        if (stationary2 && matrix2) {
+            let convergence2 = 0;
+            for (let i = 0; i < 4; i++) {
+                let rowConvergence = 0;
+                for (let j = 0; j < 4; j++) {
+                    rowConvergence += Math.abs(matrix2[i][j] - stationary2[j]);
+                }
+                convergence2 += rowConvergence / 4;
+            }
+            markovModel.field2.convergence = 1 - (convergence2 / 4);
+        }
+    }
+    
+    // Сохранение модели Маркова
+    function saveMarkovModel() {
+        const modelToSave = {
+            field1: {
+                ...markovModel.field1,
+                states: Array.from(markovModel.field1.states)
+            },
+            field2: {
+                ...markovModel.field2,
+                states: Array.from(markovModel.field2.states)
+            }
+        };
+        
+        localStorage.setItem('markovModel', JSON.stringify(modelToSave));
+    }
+    
+    // Обновление точности Маркова
+    function updateMarkovAccuracy() {
+        const markovAccuracyElement = document.getElementById('markovAccuracy');
+        if (!markovAccuracyElement) return;
+        
+        if (history.length < 5) {
+            markovAccuracyElement.textContent = '0%';
+            return;
+        }
+        
+        // Рассчитываем точность на основе сходимости
+        const accuracy = Math.round(
+            ((markovModel.field1.convergence + markovModel.field2.convergence) / 2) * 100
+        );
+        markovAccuracyElement.textContent = `${accuracy}%`;
+    }
+    
+    // Получение предсказаний Маркова
+    function getMarkovPredictions() {
+        if (history.length < 2 || !markovModel.field1.transitionMatrix) {
+            return null;
+        }
+        
+        const lastDraw = history[history.length - 1];
+        const predictionMethod = document.getElementById('predictionMethod')?.value || 'weighted';
+        
+        // Предсказание для поля 1
+        let field1Predictions = Array(20).fill(0);
+        
+        if (predictionMethod === 'mostProbable') {
+            // Наиболее вероятные переходы из последних чисел
+            for (const num of lastDraw.field1) {
+                const row = markovModel.field1.transitionMatrix[num - 1];
+                const maxProb = Math.max(...row);
+                const maxIndex = row.indexOf(maxProb);
+                field1Predictions[maxIndex] += 1;
+            }
+        } else if (predictionMethod === 'weighted') {
+            // Взвешенная сумма вероятностей
+            for (const num of lastDraw.field1) {
+                const row = markovModel.field1.transitionMatrix[num - 1];
+                for (let i = 0; i < 20; i++) {
+                    field1Predictions[i] += row[i];
+                }
+            }
+        } else if (predictionMethod === 'monteCarlo') {
+            // Монте-Карло симуляция
+            const simulations = 100;
+            for (let sim = 0; sim < simulations; sim++) {
+                let currentState = lastDraw.field1[Math.floor(Math.random() * 8)] - 1;
+                
+                // Делаем несколько шагов
+                for (let step = 0; step < 3; step++) {
+                    const row = markovModel.field1.transitionMatrix[currentState];
+                    let rand = Math.random();
+                    let cumulative = 0;
+                    
+                    for (let i = 0; i < 20; i++) {
+                        cumulative += row[i];
+                        if (rand <= cumulative) {
+                            currentState = i;
+                            break;
+                        }
+                    }
+                }
+                
+                field1Predictions[currentState]++;
+            }
+            
+            // Нормализуем
+            const sum = field1Predictions.reduce((a, b) => a + b, 0);
+            if (sum > 0) {
+                field1Predictions = field1Predictions.map(p => p / sum);
+            }
+        }
+        
+        // Предсказание для поля 2
+        let field2Predictions = Array(4).fill(0);
+        const lastField2 = lastDraw.field2 - 1;
+        const row2 = markovModel.field2.transitionMatrix[lastField2];
+        
+        if (predictionMethod === 'mostProbable') {
+            const maxProb = Math.max(...row2);
+            const maxIndex = row2.indexOf(maxProb);
+            field2Predictions[maxIndex] = 1;
+        } else {
+            field2Predictions = [...row2];
+        }
+        
+        return {
+            field1: field1Predictions,
+            field2: field2Predictions,
+            convergence: (markovModel.field1.convergence + markovModel.field2.convergence) / 2
+        };
+    }
+    
+    // Генерация чисел с помощью цепей Маркова
+    async function generateMarkovNumbers() {
+        const predictions = getMarkovPredictions();
+        
+        if (!predictions) {
+            if (debugInfo) debugInfo.textContent = 'Не удалось получить предсказания Маркова, используем гибридный метод';
+            return generateHybridNumbers();
+        }
+        
+        try {
+            // Выбираем 8 чисел для поля 1
+            const field1Probs = predictions.field1;
+            const sum1 = field1Probs.reduce((a, b) => a + b, 0);
+            
+            if (sum1 === 0) {
+                return generateHybridNumbers();
+            }
+            
+            const normalizedProbs1 = field1Probs.map(p => p / sum1);
+            const nums1 = [];
+            const availableNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            
+            for (let i = 0; i < 8; i++) {
+                let rand = Math.random();
+                let cumulative = 0;
+                let selectedIndex = 0;
+                
+                for (let j = 0; j < availableNumbers.length; j++) {
+                    const num = availableNumbers[j];
+                    cumulative += normalizedProbs1[num - 1];
+                    if (rand <= cumulative) {
+                        selectedIndex = j;
+                        break;
+                    }
+                }
+                
+                nums1.push(availableNumbers[selectedIndex]);
+                availableNumbers.splice(selectedIndex, 1);
+                
+                // Пересчитываем вероятности
+                const newSum = availableNumbers.reduce(
+                    (sum, num) => sum + normalizedProbs1[num - 1], 0
+                );
+                
+                if (newSum > 0) {
+                    for (let j = 0; j < availableNumbers.length; j++) {
+                        const num = availableNumbers[j];
+                        normalizedProbs1[num - 1] /= newSum;
+                    }
+                }
+            }
+            
+            nums1.sort((a, b) => a - b);
+            
+            // Выбираем число для поля 2
+            const field2Probs = predictions.field2;
+            const sum2 = field2Probs.reduce((a, b) => a + b, 0);
+            
+            if (sum2 === 0) {
+                return { nums1, num2: Math.floor(Math.random() * 4) + 1 };
+            }
+            
+            const normalizedProbs2 = field2Probs.map(p => p / sum2);
+            let rand = Math.random();
+            let cumulative = 0;
+            let field2Num = 1;
+            
+            for (let i = 0; i < 4; i++) {
+                cumulative += normalizedProbs2[i];
+                if (rand <= cumulative) {
+                    field2Num = i + 1;
+                    break;
+                }
+            }
+            
+            if (debugInfo) debugInfo.textContent = 'Марковская генерация выполнена успешно';
+            return { nums1, num2: field2Num };
+        } catch (e) {
+            console.error('Ошибка генерации Маркова:', e);
+            if (debugInfo) debugInfo.textContent = 'Ошибка генерации Маркова: ' + e.message;
+            return generateHybridNumbers();
+        }
+    }
+    
+    // Анализ цепей Маркова
+    function performMarkovAnalysis() {
+        if (history.length < 5) {
+            return {
+                predictions: null,
+                convergence: 0,
+                stationaryDistributions: null,
+                accuracy: 0
+            };
+        }
+        
+        const predictions = getMarkovPredictions();
+        if (!predictions) {
+            return {
+                predictions: null,
+                convergence: 0,
+                stationaryDistributions: null,
+                accuracy: 0
+            };
+        }
+        
+        // Рассчитываем точность на основе исторических данных
+        let accuracy = 0;
+        if (history.length >= 10) {
+            let correctPredictions = 0;
+            let totalPredictions = 0;
+            
+            // Тестируем на последних 5 тиражах (если есть достаточно данных)
+            const testSize = Math.min(5, history.length - 1);
+            for (let i = history.length - testSize - 1; i < history.length - 1; i++) {
+                const testDraw = history[i + 1];
+                const prevDraw = history[i];
+                
+                // Предсказание для поля 1
+                const row1 = markovModel.field1.transitionMatrix[prevDraw.field1[0] - 1];
+                const predictedNum1 = row1.indexOf(Math.max(...row1)) + 1;
+                
+                if (testDraw.field1.includes(predictedNum1)) {
+                    correctPredictions++;
+                }
+                totalPredictions++;
+                
+                // Предсказание для поля 2
+                const row2 = markovModel.field2.transitionMatrix[prevDraw.field2 - 1];
+                const predictedNum2 = row2.indexOf(Math.max(...row2)) + 1;
+                
+                if (testDraw.field2 === predictedNum2) {
+                    correctPredictions++;
+                }
+                totalPredictions++;
+            }
+            
+            if (totalPredictions > 0) {
+                accuracy = correctPredictions / totalPredictions;
+            }
+        }
+        
+        return {
+            predictions,
+            convergence: predictions.convergence,
+            stationaryDistributions: {
+                field1: markovModel.field1.stationaryDistribution,
+                field2: markovModel.field2.stationaryDistribution
+            },
+            accuracy,
+            matrix: {
+                field1: markovModel.field1.transitionMatrix,
+                field2: markovModel.field2.transitionMatrix
+            }
+        };
+    }
+    
+    // Обновление анализа Маркова в интерфейсе
+    function updateMarkovAnalysis() {
+        const analysis = performMarkovAnalysis();
+        
+        // Обновляем текстовую информацию
+        const markovOrderElement = document.getElementById('markovOrder');
+        const markovStatesCountElement = document.getElementById('markovStatesCount');
+        const markovPredictionAccuracyElement = document.getElementById('markovPredictionAccuracy');
+        const markovConvergenceElement = document.getElementById('markovConvergence');
+        
+        if (markovOrderElement) {
+            markovOrderElement.textContent = markovModel.field1.order;
+        }
+        
+        if (markovStatesCountElement) {
+            const statesCount = markovModel.field1.states.size;
+            markovStatesCountElement.textContent = statesCount;
+        }
+        
+        if (markovPredictionAccuracyElement) {
+            const accuracyPercent = analysis.accuracy ? Math.round(analysis.accuracy * 100) : 0;
+            markovPredictionAccuracyElement.textContent = `${accuracyPercent}%`;
+        }
+        
+        if (markovConvergenceElement) {
+            const convergence = analysis.convergence || 0;
+            let convergenceText = "Не определена";
+            let convergenceClass = "";
+            
+            if (convergence > 0.8) {
+                convergenceText = "Высокая";
+                convergenceClass = "win";
+            } else if (convergence > 0.5) {
+                convergenceText = "Средняя";
+                convergenceClass = "hot";
+            } else if (convergence > 0.3) {
+                convergenceText = "Низкая";
+                convergenceClass = "cold";
+            }
+            
+            markovConvergenceElement.textContent = convergenceText;
+            markovConvergenceElement.className = convergenceClass;
+        }
+        
+        // Обновляем визуализацию цепи
+        updateMarkovChainVisual();
+        
+        // Обновляем матрицу переходов
+        updateMarkovMatrix();
+    }
+    
+    // Обновление визуализации цепи Маркова
+    function updateMarkovChainVisual() {
+        const chainVisual = document.getElementById('markovChainVisual');
+        if (!chainVisual || history.length < 2) return;
+        
+        chainVisual.innerHTML = '';
+        
+        // Берем последние 3 тиража
+        const recentDraws = history.slice(-3);
+        
+        // Создаем визуализацию
+        for (let i = 0; i < recentDraws.length; i++) {
+            const draw = recentDraws[i];
+            
+            // Создаем состояние для поля 1 (первые 3 числа)
+            const stateNumbers = draw.field1.slice(0, 3).sort((a, b) => a - b);
+            const stateDiv = document.createElement('div');
+            stateDiv.className = 'chain-state';
+            
+            if (i === recentDraws.length - 1) {
+                stateDiv.classList.add('current-state');
+            }
+            
+            stateDiv.textContent = stateNumbers.join(',');
+            
+            // Добавляем вероятность, если это не последнее состояние
+            if (i < recentDraws.length - 1 && markovModel.field1.transitionMatrix) {
+                const nextDraw = recentDraws[i + 1];
+                const firstNum = draw.field1[0];
+                const transitionProb = markovModel.field1.transitionMatrix[firstNum - 1][nextDraw.field1[0] - 1];
+                
+                const probDiv = document.createElement('div');
+                probDiv.className = 'state-probability';
+                probDiv.textContent = `${(transitionProb * 100).toFixed(1)}%`;
+                stateDiv.appendChild(probDiv);
+            }
+            
+            chainVisual.appendChild(stateDiv);
+            
+            // Добавляем стрелку, если это не последнее состояние
+            if (i < recentDraws.length - 1) {
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'chain-arrow';
+                arrowDiv.textContent = '→';
+                chainVisual.appendChild(arrowDiv);
+            }
+        }
+        
+        // Добавляем предсказанное состояние
+        const predictions = getMarkovPredictions();
+        if (predictions && recentDraws.length > 0) {
+            const arrowDiv = document.createElement('div');
+            arrowDiv.className = 'chain-arrow';
+            arrowDiv.textContent = '→';
+            chainVisual.appendChild(arrowDiv);
+            
+            // Предсказываем следующие числа
+            const topNumbers = predictions.field1
+                .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+                .sort((a, b) => b.probability - a.probability)
+                .slice(0, 3)
+                .map(item => item.number)
+                .sort((a, b) => a - b);
+            
+            const predictedStateDiv = document.createElement('div');
+            predictedStateDiv.className = 'chain-state predicted-state';
+            predictedStateDiv.textContent = topNumbers.join(',');
+            
+            const probDiv = document.createElement('div');
+            probDiv.className = 'state-probability';
+            probDiv.textContent = `${(predictions.convergence * 100).toFixed(1)}%`;
+            predictedStateDiv.appendChild(probDiv);
+            
+            chainVisual.appendChild(predictedStateDiv);
+        }
+    }
+    
+    // Обновление матрицы переходов в интерфейсе
+    function updateMarkovMatrix() {
+        const matrixContainer = document.getElementById('markovMatrixContainer');
+        if (!matrixContainer || !markovModel.field1.transitionMatrix) return;
+        
+        const matrix = markovModel.field1.transitionMatrix;
+        
+        // Создаем таблицу
+        let html = '<table class="markov-matrix">';
+        
+        // Заголовок
+        html += '<tr><th></th>';
+        for (let i = 1; i <= 20; i++) {
+            html += `<th>${i}</th>`;
+        }
+        html += '</tr>';
+        
+        // Строки матрицы
+        for (let i = 0; i < 20; i++) {
+            html += `<tr><th>${i + 1}</th>`;
+            
+            for (let j = 0; j < 20; j++) {
+                const prob = matrix[i][j];
+                let className = 'markov-low';
+                
+                if (prob > 0.1) {
+                    className = 'markov-high';
+                } else if (prob > 0.05) {
+                    className = 'markov-medium';
+                }
+                
+                html += `<td class="${className} markov-value">${(prob * 100).toFixed(1)}%</td>`;
+            }
+            
+            html += '</tr>';
+        }
+        
+        html += '</table>';
+        matrixContainer.innerHTML = html;
+    }
+    
     // --- Анализ паттернов (ИСПРАВЛЕННАЯ ФУНКЦИЯ) ---
     function analyzePatterns() {
         if (history.length < 5) {
@@ -2973,6 +4348,29 @@
             if (progressionPatterns.length > 0) {
                 patterns.push(...progressionPatterns);
             }
+        }
+        
+        // 4. Анализ цепей Маркова как паттерн
+        const markovAnalysis = performMarkovAnalysis();
+        if (markovAnalysis && markovAnalysis.predictions) {
+            const topNumbers = markovAnalysis.predictions.field1
+                .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+                .sort((a, b) => b.probability - a.probability)
+                .slice(0, 8)
+                .map(item => item.number);
+            
+            const topField2 = markovAnalysis.predictions.field2
+                .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+                .sort((a, b) => b.probability - a.probability)[0].number;
+            
+            patterns.push({
+                name: 'Марковская цепь',
+                description: 'Предсказание на основе вероятностных переходов',
+                numbers: topNumbers.sort((a, b) => a - b),
+                field2Prediction: topField2,
+                confidence: markovAnalysis.convergence,
+                type: 'markov_chain'
+            });
         }
         
         // Сортируем паттерны по уверенности
@@ -3132,7 +4530,7 @@
             const stats = winStats[method];
             if (stats.bets > 0) {
                 methodEffectiveness[method] = {
-                    winRate: stats.wins / stats.bets,
+                    winRate: stats.bets > 0 ? stats.wins / stats.bets : 0,
                     roi: stats.spent > 0 ? stats.won / stats.spent : 0,
                     balance: stats.balance
                 };
@@ -3140,7 +4538,7 @@
         });
         
         // Определяем лучший метод
-        let bestMethod = 'hybrid';
+        let bestMethod = 'ensemble';
         let bestScore = 0;
         
         Object.entries(methodEffectiveness).forEach(([method, data]) => {
@@ -3198,6 +4596,7 @@
             case 'karnaugh': return generateKarnaughNumbers().nums1;
             case 'uniform': return generateUniformNumbers().nums1;
             case 'hybrid': return generateHybridNumbers().nums1;
+            case 'markov': return generateMarkovNumbers().nums1;
             default: return generateRandomNumbers();
         }
     }
@@ -3210,6 +4609,7 @@
             case 'karnaugh': return generateKarnaughNumbers().num2;
             case 'uniform': return generateUniformNumbers().num2;
             case 'hybrid': return generateHybridNumbers().num2;
+            case 'markov': return generateMarkovNumbers().num2;
             default: return Math.floor(Math.random() * 4) + 1;
         }
     }
@@ -3229,6 +4629,307 @@
             nums1: aiAnalysis.recommendation.numbers,
             num2: aiAnalysis.recommendation.field2
         };
+    }
+    
+    // --- Ансамбль-анализ (комбинирование методов) ---
+    async function generateEnsembleNumbers() {
+        if (history.length < 15) {
+            alert("⚠️ Для ансамбль-анализа нужно минимум 15 тиражей. Используем гибридный метод.");
+            return generateHybridNumbers();
+        }
+        
+        // Получаем предсказания от всех методов
+        const methods = ['cold', 'lstm', 'markov', 'patterns', 'hybrid'];
+        const predictions = [];
+        
+        for (const method of methods) {
+            try {
+                let numbers;
+                switch(method) {
+                    case 'cold':
+                        numbers = generateColdNumbers();
+                        break;
+                    case 'lstm':
+                        numbers = await generateLSTMNumbers();
+                        break;
+                    case 'markov':
+                        numbers = await generateMarkovNumbers();
+                        break;
+                    case 'patterns':
+                        numbers = await generatePatternNumbers();
+                        break;
+                    case 'hybrid':
+                        numbers = await generateHybridNumbers();
+                        break;
+                }
+                
+                if (numbers) {
+                    predictions.push({
+                        method,
+                        numbers,
+                        weight: getMethodWeight(method)
+                    });
+                }
+            } catch (e) {
+                console.error(`Ошибка в методе ${method}:`, e);
+            }
+        }
+        
+        if (predictions.length === 0) {
+            return generateHybridNumbers();
+        }
+        
+        // Комбинируем предсказания
+        const combinedNumbers = combinePredictions(predictions);
+        
+        return combinedNumbers;
+    }
+    
+    // Получение веса метода на основе его эффективности
+    function getMethodWeight(method) {
+        const stats = winStats[method];
+        if (!stats || stats.bets === 0) {
+            return 1; // Вес по умолчанию
+        }
+        
+        const winRate = stats.bets > 0 ? stats.wins / stats.bets : 0;
+        const roi = stats.spent > 0 ? stats.won / stats.spent : 0;
+        
+        // Комбинированный вес: 60% от winRate + 40% от ROI
+        const weight = (winRate * 0.6) + (roi * 0.4);
+        
+        // Минимальный вес 0.1, максимальный 2
+        return Math.max(0.1, Math.min(2, weight * 2));
+    }
+    
+    // Комбинирование предсказаний
+    function combinePredictions(predictions) {
+        // Для поля 1: собираем все числа с их весами
+        const numberWeights = Array(20).fill(0);
+        
+        for (const pred of predictions) {
+            for (const num of pred.numbers.nums1) {
+                if (num >= 1 && num <= 20) {
+                    numberWeights[num - 1] += pred.weight;
+                }
+            }
+        }
+        
+        // Выбираем 8 чисел с наибольшим весом
+        const topNumbers = numberWeights
+            .map((weight, idx) => ({ number: idx + 1, weight }))
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 8)
+            .map(item => item.number)
+            .sort((a, b) => a - b);
+        
+        // Для поля 2: взвешенное голосование
+        const field2Weights = Array(4).fill(0);
+        
+        for (const pred of predictions) {
+            const num2 = pred.numbers.num2;
+            if (num2 >= 1 && num2 <= 4) {
+                field2Weights[num2 - 1] += pred.weight;
+            }
+        }
+        
+        // Выбираем число с наибольшим весом
+        const maxWeight = Math.max(...field2Weights);
+        const selectedField2 = field2Weights.indexOf(maxWeight) + 1;
+        
+        return {
+            nums1: topNumbers,
+            num2: selectedField2
+        };
+    }
+    
+    // Анализ ансамбля
+    function performEnsembleAnalysis() {
+        if (history.length < 10) {
+            return {
+                recommendations: [],
+                methodComparison: [],
+                convergence: 0
+            };
+        }
+        
+        // Сравниваем эффективность методов
+        const methodComparison = [];
+        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'markov', 'hybrid', 'patterns', 'ai', 'ensemble'];
+        
+        for (const method of methods) {
+            const stats = winStats[method];
+            if (stats && stats.bets > 0) {
+                const winRate = stats.bets > 0 ? stats.wins / stats.bets : 0;
+                const roi = stats.spent > 0 ? stats.won / stats.spent : 0;
+                const score = (winRate * 0.6) + (roi * 0.4);
+                
+                methodComparison.push({
+                    method,
+                    winRate,
+                    roi,
+                    score,
+                    balance: stats.balance
+                });
+            }
+        }
+        
+        // Сортируем по score
+        methodComparison.sort((a, b) => b.score - a.score);
+        
+        // Рассчитываем сходимость (насколько методы согласны друг с другом)
+        let convergence = 0;
+        if (methodComparison.length >= 3) {
+            const top3Scores = methodComparison.slice(0, 3).map(m => m.score);
+            const avgScore = top3Scores.reduce((a, b) => a + b, 0) / 3;
+            const variance = top3Scores.reduce((a, b) => a + Math.pow(b - avgScore, 2), 0) / 3;
+            convergence = 1 - Math.min(1, variance * 10); // Нормализуем к 0-1
+        }
+        
+        return {
+            methodComparison,
+            convergence
+        };
+    }
+    
+    // Обновление анализа ансамбля в интерфейсе
+    function updateEnsembleAnalysis() {
+        const analysis = performEnsembleAnalysis();
+        
+        // Обновляем рекомендацию
+        const ensembleRecommendation = document.getElementById('ensembleRecommendationContent');
+        if (ensembleRecommendation) {
+            if (analysis.methodComparison.length === 0) {
+                ensembleRecommendation.innerHTML = '<p>Недостаточно данных для анализа ансамбля.</p>';
+                return;
+            }
+            
+            const topMethod = analysis.methodComparison[0];
+            const methodNames = {
+                'cold': 'Холодные числа',
+                'ogneva': 'Метод Огнева',
+                'karnaugh': 'Метод Карнауха',
+                'uniform': 'Равномерное распределение',
+                'lstm': 'LSTM Прогноз',
+                'markov': 'Цепи Маркова',
+                'hybrid': 'Гибридный метод',
+                'patterns': 'Анализ паттернов',
+                'ai': 'ИИ Анализ',
+                'ensemble': 'Ансамбль-анализ'
+            };
+            
+            let html = `<p><strong>Лучший метод:</strong> ${methodNames[topMethod.method] || topMethod.method}</p>`;
+            html += `<p>Win Rate: ${(topMethod.winRate * 100).toFixed(1)}% | ROI: ${(topMethod.roi * 100).toFixed(1)}% | Баланс: ${topMethod.balance} ₽</p>`;
+            html += `<p>Сходимость ансамбля: ${(analysis.convergence * 100).toFixed(1)}%</p>`;
+            
+            ensembleRecommendation.innerHTML = html;
+        }
+        
+        // Обновляем сравнение методов
+        const methodComparisonElement = document.getElementById('methodComparison');
+        if (methodComparisonElement) {
+            methodComparisonElement.innerHTML = '';
+            
+            const topMethods = analysis.methodComparison.slice(0, 5);
+            
+            for (const methodData of topMethods) {
+                const methodItem = document.createElement('div');
+                methodItem.className = 'method-comparison-item';
+                
+                const methodName = methodData.method === 'ensemble' ? 'Ансамбль' : 
+                                 methodData.method === 'markov' ? 'Марков' : 
+                                 methodData.method === 'lstm' ? 'LSTM' : 
+                                 methodData.method;
+                
+                methodItem.innerHTML = `
+                    <div class="method-name">${methodName}</div>
+                    <div class="method-score">${(methodData.score * 100).toFixed(1)}</div>
+                    <div style="font-size: 0.8rem;">
+                        <div>Win: ${(methodData.winRate * 100).toFixed(1)}%</div>
+                        <div>ROI: ${(methodData.roi * 100).toFixed(1)}%</div>
+                        <div>Баланс: ${methodData.balance} ₽</div>
+                    </div>
+                `;
+                
+                methodComparisonElement.appendChild(methodItem);
+            }
+        }
+        
+        // Обновляем график сходимости
+        updateConvergenceChart(analysis);
+    }
+    
+    // Обновление графика сходимости
+    function updateConvergenceChart(analysis) {
+        const canvas = document.getElementById('convergenceChart');
+        if (!canvas || !analysis.methodComparison.length) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Если уже есть график, уничтожаем его
+        if (window.convergenceChartInstance) {
+            window.convergenceChartInstance.destroy();
+        }
+        
+        const methodNames = analysis.methodComparison.map(m => 
+            m.method === 'ensemble' ? 'Ансамбль' : 
+            m.method === 'markov' ? 'Марков' : 
+            m.method === 'lstm' ? 'LSTM' : 
+            m.method
+        );
+        
+        const scores = analysis.methodComparison.map(m => m.score * 100);
+        const winRates = analysis.methodComparison.map(m => m.winRate * 100);
+        const rois = analysis.methodComparison.map(m => m.roi * 100);
+        
+        window.convergenceChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: methodNames,
+                datasets: [
+                    {
+                        label: 'Общий Score (%)',
+                        data: scores,
+                        backgroundColor: 'rgba(156, 39, 176, 0.6)',
+                        borderColor: 'rgba(156, 39, 176, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Win Rate (%)',
+                        data: winRates,
+                        backgroundColor: 'rgba(0, 188, 212, 0.6)',
+                        borderColor: 'rgba(0, 188, 212, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'ROI (%)',
+                        data: rois,
+                        backgroundColor: 'rgba(255, 87, 34, 0.6)',
+                        borderColor: 'rgba(255, 87, 34, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Процент'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
     }
     
     // --- Отображение истории ---
@@ -3251,10 +4952,11 @@
                     case 'karnaugh': tagClass = 'tag-karnaugh'; tagText = 'ка'; break;
                     case 'uniform': tagClass = 'tag-uniform'; tagText = 'ур'; break;
                     case 'lstm': tagClass = 'tag-lstm'; tagText = 'AI'; break;
+                    case 'markov': tagClass = 'tag-markov'; tagText = 'МК'; break;
                     case 'hybrid': tagClass = 'tag-hybrid'; tagText = 'ГБ'; break;
                     case 'patterns': tagClass = 'tag-pattern'; tagText = 'ПТ'; break;
                     case 'ai': tagClass = 'tag-ai'; tagText = 'ИИ'; break;
-                    case 'smart': tagClass = 'tag-lstm'; tagText = 'УМ'; break;
+                    case 'ensemble': tagClass = 'tag-ensemble'; tagText = 'АН'; break;
                 }
                 methodTag = `<span class="method-tag ${tagClass}">${tagText}</span>`;
             }
@@ -3283,27 +4985,43 @@
         }
     }
     
-    // Удаление записи истории
+    // Удаление записи истории - ИСПРАВЛЕННАЯ ВЕРСИЯ
     if (historyList) {
         historyList.addEventListener('click', e => {
             if(e.target.tagName === 'BUTTON') {
                 const idx = +e.target.dataset.idx;
+                const entry = history[idx];
+                
+                // Если у записи есть выигрыш и метод, корректируем статистику
+                if (entry.betMethod && entry.winAmount && entry.winAmount > 0) {
+                    const method = entry.betMethod;
+                    if (winStats[method]) {
+                        winStats[method].wins--;
+                        winStats[method].won -= entry.winAmount;
+                        winStats[method].balance = winStats[method].won - winStats[method].spent;
+                        winStats[method].lastUpdate = new Date().toISOString();
+                        saveWinStats();
+                    }
+                }
+                
                 history.splice(idx, 1);
                 saveHistory();
                 renderHistory();
                 updateStats();
-                updateWinStats();
+                updateWinStats(); // Обновляем статистику выигрышей
                 updateCharts();
                 renderHeatmap();
                 updatePredictionCharts();
                 updatePatternsAnalysis();
                 updateAIAnalysis();
+                updateMarkovAnalysis();
+                updateEnsembleAnalysis();
                 updateConfidenceIndicator();
             }
         });
     }
     
-    // Очистка истории
+    // Очистка истории - ИСПРАВЛЕННАЯ ВЕРСИЯ
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     if (clearHistoryBtn) {
         clearHistoryBtn.onclick = () => {
@@ -3312,27 +5030,20 @@
                 bets = [];
                 saveHistory();
                 saveBets();
+                
+                // Сбрасываем статистику
+                initWinStats(); // Эта функция переинициализирует статистику
+                
                 renderHistory();
                 updateStats();
-                
-                winStats = {
-                    cold: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    ogneva: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    karnaugh: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    uniform: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    lstm: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    hybrid: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    patterns: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    ai: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 },
-                    smart: { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 }
-                };
-                saveWinStats();
                 updateWinStats();
                 updateCharts();
                 renderHeatmap();
                 updatePredictionCharts();
                 updatePatternsAnalysis();
                 updateAIAnalysis();
+                updateMarkovAnalysis();
+                updateEnsembleAnalysis();
                 updateConfidenceIndicator();
             }
         };
@@ -3413,7 +5124,7 @@
         return { drawId, nums1, num2 };
     }
 
-    // --- Добавление в историю ---
+    // --- Добавление в историю - ИСПРАВЛЕННАЯ ВЕРСИЯ ---
     const addHistoryBtn = document.getElementById('addHistoryBtn');
     if (addHistoryBtn) {
         addHistoryBtn.onclick = () => {
@@ -3441,19 +5152,25 @@
                 const matchedField2 = bet.numbers.field2 === num2 ? 1 : 0;
                 
                 const prizeKey = `${matchedField1},${matchedField2}`;
-                const prize = prizeTable[prizeKey];
+                const prize = prizeTable[prizeKey] || { amount: 0, label: 'Нет выигрыша' };
                 
-                if (prize) {
+                if (prize.amount > 0) {
                     result.winAmount = prize.amount;
                     result.winType = prize.label;
                     result.betMethod = bet.method;
                     
-                    // Обновляем статистику
+                    // Обновляем статистику - ИСПРАВЛЕННАЯ ЛОГИКА
                     if (winStats[bet.method]) {
                         winStats[bet.method].wins++;
                         winStats[bet.method].won += prize.amount;
                         winStats[bet.method].balance = winStats[bet.method].won - winStats[bet.method].spent;
+                        winStats[bet.method].lastUpdate = new Date().toISOString();
+                        saveWinStats();
                     }
+                } else {
+                    result.winAmount = 0;
+                    result.winType = 'Нет выигрыша';
+                    result.betMethod = bet.method;
                 }
                 
                 // Удаляем ставку после расчета выигрыша
@@ -3469,17 +5186,24 @@
             
             renderHistory();
             updateStats();
-            updateWinStats();
+            updateWinStats(); // Обновляем статистику выигрышей
             updateCharts();
             renderHeatmap();
             updatePredictionCharts();
             updatePatternsAnalysis();
             updateAIAnalysis();
+            updateMarkovAnalysis();
+            updateEnsembleAnalysis();
             updateConfidenceIndicator();
             
             // Онлайн-обучение модели при наличии новых данных
             if (history.length >= 15 && lstmModel) {
                 setTimeout(onlineTrainModel, 1000);
+            }
+            
+            // Обновляем цепи Маркова
+            if (history.length >= 2) {
+                setTimeout(trainMarkovModel, 500);
             }
         };
     }
@@ -3529,66 +5253,329 @@
         statsTable.innerHTML = html;
     }
     
-    // --- Статистика выигрышей ---
-    const winStatsContainer = document.getElementById('winStats');
+    // --- СТАТИСТИКА ВЫИГРЫШЕЙ - ИСПРАВЛЕННАЯ И УЛУЧШЕННАЯ ВЕРСИЯ ---
     
+    // Обновление статистики выигрышей
     function updateWinStats() {
-        if (!winStatsContainer) return;
+        // Обновляем сводную статистику
+        updateSummaryStats();
         
-        winStatsContainer.innerHTML = '';
+        // Обновляем сетку статистики по методам
+        updateWinStatsGrid();
         
-        const methods = {
-            cold: { name: 'Холодные', class: 'tag-cold' },
-            ogneva: { name: 'Огнева', class: 'tag-ogneva' },
-            karnaugh: { name: 'Карнауха', class: 'tag-karnaugh' },
-            uniform: { name: 'Равномерный', class: 'tag-uniform' },
-            lstm: { name: 'LSTM Прогноз', class: 'tag-lstm' },
-            hybrid: { name: 'Гибридный', class: 'tag-hybrid' },
-            patterns: { name: 'Паттерны', class: 'tag-pattern' },
-            ai: { name: 'ИИ Анализ', class: 'tag-ai' },
-            smart: { name: 'Умная генерация', class: 'tag-lstm' }
+        // Обновляем график производительности методов
+        updateMethodPerformance();
+        
+        // Обновляем график статистики
+        updateWinStatsChart();
+    }
+    
+    // Обновление сводной статистики
+    function updateSummaryStats() {
+        const totalBetsElement = document.getElementById('totalBets');
+        const totalWinsElement = document.getElementById('totalWins');
+        const totalBalanceElement = document.getElementById('totalBalance');
+        const winRateElement = document.getElementById('winRate');
+        const bestMethodContainer = document.getElementById('bestMethodContainer');
+        const bestMethodInfo = document.getElementById('bestMethodInfo');
+        
+        if (!totalBetsElement || !totalWinsElement || !totalBalanceElement || !winRateElement) return;
+        
+        let totalBets = 0;
+        let totalWins = 0;
+        let totalSpent = 0;
+        let totalWon = 0;
+        
+        // Собираем общую статистику по всем методам
+        Object.values(winStats).forEach(stats => {
+            totalBets += stats.bets || 0;
+            totalWins += stats.wins || 0;
+            totalSpent += stats.spent || 0;
+            totalWon += stats.won || 0;
+        });
+        
+        const totalBalance = totalWon - totalSpent;
+        const winRate = totalBets > 0 ? (totalWins / totalBets) * 100 : 0;
+        
+        totalBetsElement.textContent = totalBets;
+        totalWinsElement.textContent = totalWins;
+        totalBalanceElement.textContent = totalBalance.toLocaleString('ru-RU') + ' ₽';
+        totalBalanceElement.className = totalBalance >= 0 ? 'summary-value win' : 'summary-value lose';
+        winRateElement.textContent = winRate.toFixed(1) + '%';
+        
+        // Определяем лучший метод
+        let bestMethod = null;
+        let bestScore = -Infinity;
+        
+        Object.entries(winStats).forEach(([method, stats]) => {
+            if (stats.bets > 0) {
+                const winRate = stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
+                const roi = stats.spent > 0 ? (stats.won / stats.spent) * 100 : 0;
+                const score = (winRate * 0.6) + (roi * 0.4);
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMethod = { method, stats, winRate, roi, score };
+                }
+            }
+        });
+        
+        // Показываем информацию о лучшем методе
+        if (bestMethod && bestMethodContainer && bestMethodInfo) {
+            const methodNames = {
+                'cold': 'Холодные числа',
+                'ogneva': 'Метод Огнева',
+                'karnaugh': 'Метод Карнауха',
+                'uniform': 'Равномерное распределение',
+                'lstm': 'LSTM Прогноз',
+                'markov': 'Цепи Маркова',
+                'hybrid': 'Гибридный метод',
+                'patterns': 'Анализ паттернов',
+                'ai': 'ИИ Анализ',
+                'ensemble': 'Ансамбль-анализ'
+            };
+            
+            const methodName = methodNames[bestMethod.method] || bestMethod.method;
+            const winRateText = bestMethod.winRate.toFixed(1);
+            const roiText = bestMethod.roi.toFixed(1);
+            const balanceText = bestMethod.stats.balance.toLocaleString('ru-RU');
+            
+            bestMethodInfo.innerHTML = `
+                <p><strong>${methodName}</strong></p>
+                <p>Win Rate: ${winRateText}% | ROI: ${roiText}% | Баланс: ${balanceText} ₽</p>
+                <p>Ставок: ${bestMethod.stats.bets} | Выигрышей: ${bestMethod.stats.wins}</p>
+            `;
+            
+            bestMethodContainer.style.display = 'block';
+        } else if (bestMethodContainer) {
+            bestMethodContainer.style.display = 'none';
+        }
+    }
+    
+    // Обновление сетки статистики по методам
+    function updateWinStatsGrid() {
+        const winStatsGrid = document.getElementById('winStatsGrid');
+        if (!winStatsGrid) return;
+        
+        winStatsGrid.innerHTML = '';
+        
+        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'markov', 'hybrid', 'patterns', 'ai', 'ensemble'];
+        const methodNames = {
+            'cold': 'Холодные',
+            'ogneva': 'Огнева',
+            'karnaugh': 'Карнауха',
+            'uniform': 'Равномерный',
+            'lstm': 'LSTM',
+            'markov': 'Марков',
+            'hybrid': 'Гибридный',
+            'patterns': 'Паттерны',
+            'ai': 'ИИ Анализ',
+            'ensemble': 'Ансамбль'
         };
         
-        for(const [method, data] of Object.entries(winStats)) {
-            const methodData = methods[method];
-            if (!methodData) continue;
+        methods.forEach(method => {
+            const stats = winStats[method] || { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 };
+            const winRate = stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
+            const roi = stats.spent > 0 ? (stats.won / stats.spent) * 100 : 0;
             
-            const winRate = data.bets ? Math.round((data.wins / data.bets) * 100) : 0;
-            const roi = data.spent ? Math.round((data.won / data.spent) * 100) : 0;
+            const statItem = document.createElement('div');
+            statItem.className = 'stat-item';
             
-            const statCard = document.createElement('div');
-            statCard.className = 'stat-card';
-            statCard.innerHTML = `
-                <div class="stat-label">${methodData.name}</div>
-                <div class="stat-value">${data.bets}</div>
-                <div class="stat-label">Ставки</div>
-                
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <div>
-                        <div class="stat-value win">${data.wins}</div>
-                        <div class="stat-label">Выиграно</div>
-                    </div>
-                    <div>
-                        <div class="stat-value">${winRate}%</div>
-                        <div class="stat-label">Процент</div>
-                    </div>
+            // Определяем тренд
+            let trendClass = 'trend-neutral';
+            let trendSymbol = '➡️';
+            
+            if (stats.balance > 0) {
+                trendClass = 'trend-up';
+                trendSymbol = '📈';
+            } else if (stats.balance < 0) {
+                trendClass = 'trend-down';
+                trendSymbol = '📉';
+            }
+            
+            statItem.innerHTML = `
+                <div class="stat-title">${methodNames[method]}</div>
+                <div class="stat-number" style="color: ${stats.balance >= 0 ? 'var(--win-color)' : 'var(--lose-color)'}">
+                    ${stats.balance.toLocaleString('ru-RU')} ₽
                 </div>
-                
-                <div style="margin-top: 10px;">
-                    <div class="stat-value">${data.balance} ₽</div>
-                    <div class="stat-label">Баланс</div>
-                </div>
-                
-                <div style="margin-top: 5px; font-size: 0.8rem;">
-                    <div>Потрачено: ${data.spent} ₽</div>
-                    <div>Выиграно: ${data.won} ₽</div>
-                    <div>ROI: ${roi}%</div>
+                <div class="stat-trend ${trendClass}">${trendSymbol}</div>
+                <div style="font-size: 0.75rem; margin-top: 5px;">
+                    <div>Ставок: ${stats.bets}</div>
+                    <div>Win: ${winRate.toFixed(1)}%</div>
+                    <div>ROI: ${roi.toFixed(1)}%</div>
                 </div>
             `;
-            winStatsContainer.appendChild(statCard);
+            
+            winStatsGrid.appendChild(statItem);
+        });
+    }
+    
+    // Обновление производительности методов
+    function updateMethodPerformance() {
+        const methodPerformance = document.getElementById('methodPerformance');
+        if (!methodPerformance) return;
+        
+        methodPerformance.innerHTML = '';
+        
+        const methods = ['ensemble', 'markov', 'lstm', 'hybrid', 'patterns', 'ai', 'cold', 'ogneva', 'karnaugh', 'uniform'];
+        const methodNames = {
+            'cold': 'Холодные',
+            'ogneva': 'Огнева',
+            'karnaugh': 'Карнауха',
+            'uniform': 'Равномерный',
+            'lstm': 'LSTM',
+            'markov': 'Марков',
+            'hybrid': 'Гибридный',
+            'patterns': 'Паттерны',
+            'ai': 'ИИ Анализ',
+            'ensemble': 'Ансамбль'
+        };
+        
+        methods.forEach(method => {
+            const stats = winStats[method] || { bets: 0, wins: 0, spent: 0, won: 0, balance: 0 };
+            if (stats.bets === 0) return;
+            
+            const winRate = stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
+            const roi = stats.spent > 0 ? (stats.won / stats.spent) * 100 : 0;
+            const score = (winRate * 0.6) + (roi * 0.4);
+            
+            const performanceBar = document.createElement('div');
+            performanceBar.className = 'performance-bar';
+            
+            // Цвет полосы в зависимости от метода
+            let barColor = 'var(--primary-color)';
+            switch(method) {
+                case 'ensemble': barColor = 'var(--ensemble-color)'; break;
+                case 'markov': barColor = 'var(--markov-color)'; break;
+                case 'lstm': barColor = 'var(--lstm-color)'; break;
+                case 'hybrid': barColor = 'var(--hybrid-color)'; break;
+                case 'patterns': barColor = 'var(--pattern-color)'; break;
+                case 'ai': barColor = 'var(--ai-color)'; break;
+                case 'cold': barColor = 'var(--cold-color)'; break;
+                case 'ogneva': barColor = 'var(--special-color)'; break;
+                case 'karnaugh': barColor = '#ff9500'; break;
+                case 'uniform': barColor = '#4CAF50'; break;
+            }
+            
+            performanceBar.innerHTML = `
+                <div class="performance-label">${methodNames[method]}</div>
+                <div class="performance-bar-container">
+                    <div class="performance-bar-fill" style="width: ${score * 10}%; background: ${barColor};"></div>
+                </div>
+                <div class="performance-value">${(score * 10).toFixed(1)}</div>
+            `;
+            
+            methodPerformance.appendChild(performanceBar);
+        });
+    }
+    
+    // Обновление графика статистики
+    function updateWinStatsChart() {
+        const canvas = document.getElementById('winStatsChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Если уже есть график, уничтожаем его
+        if (window.winStatsChartInstance) {
+            window.winStatsChartInstance.destroy();
         }
         
-        saveWinStats();
+        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'markov', 'hybrid', 'patterns', 'ai', 'ensemble'];
+        const methodNames = {
+            'cold': 'Холодные',
+            'ogneva': 'Огнева',
+            'karnaugh': 'Карнауха',
+            'uniform': 'Равномерный',
+            'lstm': 'LSTM',
+            'markov': 'Марков',
+            'hybrid': 'Гибридный',
+            'patterns': 'Паттерны',
+            'ai': 'ИИ Анализ',
+            'ensemble': 'Ансамбль'
+        };
+        
+        const balances = methods.map(method => {
+            const stats = winStats[method] || { balance: 0 };
+            return stats.balance;
+        });
+        
+        const winRates = methods.map(method => {
+            const stats = winStats[method] || { bets: 0, wins: 0 };
+            return stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
+        });
+        
+        // Цвета для методов
+        const colors = methods.map(method => {
+            switch(method) {
+                case 'ensemble': return 'rgba(156, 39, 176, 0.6)';
+                case 'markov': return 'rgba(255, 87, 34, 0.6)';
+                case 'lstm': return 'rgba(0, 188, 212, 0.6)';
+                case 'hybrid': return 'rgba(76, 175, 80, 0.6)';
+                case 'patterns': return 'rgba(255, 64, 129, 0.6)';
+                case 'ai': return 'rgba(156, 39, 176, 0.6)';
+                case 'cold': return 'rgba(10, 132, 255, 0.6)';
+                case 'ogneva': return 'rgba(175, 82, 222, 0.6)';
+                case 'karnaugh': return 'rgba(255, 149, 0, 0.6)';
+                case 'uniform': return 'rgba(76, 175, 80, 0.6)';
+                default: return 'rgba(0, 102, 204, 0.6)';
+            }
+        });
+        
+        window.winStatsChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: methods.map(m => methodNames[m]),
+                datasets: [
+                    {
+                        label: 'Баланс (₽)',
+                        data: balances,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.6', '1')),
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Win Rate (%)',
+                        data: winRates,
+                        backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Баланс (₽)'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Win Rate (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
     }
     
     // Отображение сгенерированных чисел
@@ -3603,14 +5590,18 @@
         nums1.forEach(n => {
             const div = document.createElement('div');
             div.className = 'number';
-            if (method === 'lstm' || method === 'smart') {
+            if (method === 'lstm') {
                 div.classList.add('lstm');
+            } else if (method === 'markov') {
+                div.classList.add('markov');
             } else if (method === 'hybrid') {
                 div.classList.add('hybrid');
             } else if (method === 'patterns') {
                 div.classList.add('pattern');
             } else if (method === 'ai') {
                 div.classList.add('ai');
+            } else if (method === 'ensemble') {
+                div.classList.add('ensemble');
             } else if(method === 'karnaugh' && nums1.indexOf(n) < 5) {
                 div.classList.add('special');
             } else if(method === 'uniform') {
@@ -3622,14 +5613,18 @@
         
         const div2 = document.createElement('div');
         div2.className = 'number small';
-        if (method === 'lstm' || method === 'smart') {
+        if (method === 'lstm') {
             div2.classList.add('lstm');
+        } else if (method === 'markov') {
+            div2.classList.add('markov');
         } else if (method === 'hybrid') {
             div2.classList.add('hybrid');
         } else if (method === 'patterns') {
             div2.classList.add('pattern');
         } else if (method === 'ai') {
             div2.classList.add('ai');
+        } else if (method === 'ensemble') {
+            div2.classList.add('ensemble');
         } else if(method === 'ogneva' || method === 'uniform') {
             div2.classList.add('special');
         }
@@ -3728,17 +5723,18 @@
             window.efficiencyChartInstance.destroy();
         }
         
-        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'hybrid', 'patterns', 'ai', 'smart'];
+        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'markov', 'hybrid', 'patterns', 'ai', 'ensemble'];
         const methodNames = {
             cold: 'Холодные',
             ogneva: 'Огнева',
             karnaugh: 'Карнауха',
             uniform: 'Равномерный',
             lstm: 'LSTM',
+            markov: 'Марков',
             hybrid: 'Гибридный',
             patterns: 'Паттерны',
             ai: 'ИИ Анализ',
-            smart: 'Умная'
+            ensemble: 'Ансамбль'
         };
         
         const winRates = methods.map(method => {
@@ -3796,9 +5792,8 @@
     
     // Обновление графиков прогнозов
     async function updatePredictionCharts() {
-        const predictions = await getLSTMPredictions();
-        
-        if (!predictions) return;
+        const lstmPredictions = await getLSTMPredictions();
+        const markovPredictions = getMarkovPredictions();
         
         // График для поля 1
         const field1ChartCanvas = document.getElementById('field1PredictionChart');
@@ -3809,17 +5804,39 @@
                 window.field1ChartInstance.destroy();
             }
             
+            const labels = Array.from({ length: 20 }, (_, i) => i + 1);
+            const datasets = [];
+            
+            if (lstmPredictions) {
+                datasets.push({
+                    label: 'LSTM Прогноз',
+                    data: lstmPredictions.field1,
+                    backgroundColor: 'rgba(0, 188, 212, 0.6)',
+                    borderColor: 'rgba(0, 188, 212, 1)',
+                    borderWidth: 1
+                });
+            }
+            
+            if (markovPredictions) {
+                datasets.push({
+                    label: 'Цепи Маркова',
+                    data: markovPredictions.field1,
+                    backgroundColor: 'rgba(255, 87, 34, 0.6)',
+                    borderColor: 'rgba(255, 87, 34, 1)',
+                    borderWidth: 1
+                });
+            }
+            
+            if (datasets.length === 0) {
+                field1ChartCanvas.parentElement.innerHTML = '<p style="text-align: center; padding: 40px;">Нет данных для прогноза</p>';
+                return;
+            }
+            
             window.field1ChartInstance = new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: Array.from({ length: 20 }, (_, i) => i + 1),
-                    datasets: [{
-                        label: 'Вероятность выпадения',
-                        data: predictions.field1,
-                        backgroundColor: 'rgba(0, 188, 212, 0.6)',
-                        borderColor: 'rgba(0, 188, 212, 1)',
-                        borderWidth: 1
-                    }]
+                    labels: labels,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -3847,8 +5864,23 @@
             if (field1PredictionNumbers) {
                 field1PredictionNumbers.innerHTML = '';
                 
+                // Комбинируем предсказания
+                let combinedPredictions = Array(20).fill(0);
+                
+                if (lstmPredictions) {
+                    for (let i = 0; i < 20; i++) {
+                        combinedPredictions[i] += lstmPredictions.field1[i] * 0.5;
+                    }
+                }
+                
+                if (markovPredictions) {
+                    for (let i = 0; i < 20; i++) {
+                        combinedPredictions[i] += markovPredictions.field1[i] * 0.5;
+                    }
+                }
+                
                 // Сортируем числа по вероятности
-                const sortedPredictions = predictions.field1
+                const sortedPredictions = combinedPredictions
                     .map((prob, index) => ({ number: index + 1, probability: prob }))
                     .sort((a, b) => b.probability - a.probability)
                     .slice(0, 10);
@@ -3883,17 +5915,39 @@
                 window.field2ChartInstance.destroy();
             }
             
+            const labels = ['1', '2', '3', '4'];
+            const datasets = [];
+            
+            if (lstmPredictions) {
+                datasets.push({
+                    label: 'LSTM Прогноз',
+                    data: lstmPredictions.field2,
+                    backgroundColor: 'rgba(0, 188, 212, 0.6)',
+                    borderColor: 'rgba(0, 188, 212, 1)',
+                    borderWidth: 1
+                });
+            }
+            
+            if (markovPredictions) {
+                datasets.push({
+                    label: 'Цепи Маркова',
+                    data: markovPredictions.field2,
+                    backgroundColor: 'rgba(255, 87, 34, 0.6)',
+                    borderColor: 'rgba(255, 87, 34, 1)',
+                    borderWidth: 1
+                });
+            }
+            
+            if (datasets.length === 0) {
+                field2ChartCanvas.parentElement.innerHTML = '<p style="text-align: center; padding: 40px;">Нет данных для прогноза</p>';
+                return;
+            }
+            
             window.field2ChartInstance = new Chart(ctx2, {
                 type: 'bar',
                 data: {
-                    labels: ['1', '2', '3', '4'],
-                    datasets: [{
-                        label: 'Вероятность выпадения',
-                        data: predictions.field2,
-                        backgroundColor: 'rgba(156, 39, 176, 0.6)',
-                        borderColor: 'rgba(156, 39, 176, 1)',
-                        borderWidth: 1
-                    }]
+                    labels: labels,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -3915,7 +5969,22 @@
             if (field2PredictionNumbers) {
                 field2PredictionNumbers.innerHTML = '';
                 
-                predictions.field2.forEach((prob, index) => {
+                // Комбинируем предсказания
+                let combinedPredictions = Array(4).fill(0);
+                
+                if (lstmPredictions) {
+                    for (let i = 0; i < 4; i++) {
+                        combinedPredictions[i] += lstmPredictions.field2[i] * 0.5;
+                    }
+                }
+                
+                if (markovPredictions) {
+                    for (let i = 0; i < 4; i++) {
+                        combinedPredictions[i] += markovPredictions.field2[i] * 0.5;
+                    }
+                }
+                
+                combinedPredictions.forEach((prob, index) => {
                     const numberDiv = document.createElement('div');
                     numberDiv.className = 'prediction-number';
                     numberDiv.textContent = index + 1;
@@ -4090,11 +6159,17 @@
                 case 'predictions':
                     updatePredictionCharts();
                     break;
+                case 'markovAnalysis':
+                    updateMarkovAnalysis();
+                    break;
                 case 'patterns':
                     updatePatternsAnalysis();
                     break;
                 case 'aiAnalysis':
                     updateAIAnalysis();
+                    break;
+                case 'ensemble':
+                    updateEnsembleAnalysis();
                     break;
             }
         });
@@ -4104,6 +6179,9 @@
     document.addEventListener('DOMContentLoaded', async () => {
         const genBtn = document.getElementById('genBtn');
         const genBtnBasic = document.getElementById('genBtnBasic');
+        const trainMarkovBtn = document.getElementById('trainMarkovBtn');
+        const updateMarkovBtn = document.getElementById('updateMarkovBtn');
+        const applyMarkovBtn = document.getElementById('applyMarkovBtn');
         
         if (genBtn) {
             genBtn.addEventListener('click', generateNumbers);
@@ -4115,13 +6193,49 @@
                 const tempMethod = currentMethod;
                 currentMethod = document.querySelector('.method-btn.active').dataset.method;
                 generateNumbers();
-                // Возвращаем умную генерацию как метод по умолчанию
+                // Возвращаем ансамбль как метод по умолчанию
                 currentMethod = tempMethod;
             });
         }
         
         if (trainModelBtn) {
             trainModelBtn.addEventListener('click', trainModel);
+        }
+        
+        if (trainMarkovBtn) {
+            trainMarkovBtn.addEventListener('click', trainMarkovModel);
+        }
+        
+        if (updateMarkovBtn) {
+            updateMarkovBtn.addEventListener('click', () => {
+                trainMarkovModel();
+                alert('Цепи Маркова обновлены!');
+            });
+        }
+        
+        if (applyMarkovBtn) {
+            applyMarkovBtn.addEventListener('click', () => {
+                const markovAnalysis = performMarkovAnalysis();
+                if (!markovAnalysis || !markovAnalysis.predictions) {
+                    alert('Не удалось получить прогноз от цепей Маркова. Добавьте больше данных в историю.');
+                    return;
+                }
+                
+                const predictions = markovAnalysis.predictions;
+                const topNumbers = predictions.field1
+                    .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+                    .sort((a, b) => b.probability - a.probability)
+                    .slice(0, 8)
+                    .map(item => item.number)
+                    .sort((a, b) => a - b);
+                
+                const topField2 = predictions.field2
+                    .map((prob, idx) => ({ number: idx + 1, probability: prob }))
+                    .sort((a, b) => b.probability - a.probability)[0].number;
+                
+                displayNumbers(topNumbers, topField2, 'markov');
+                alert(`Применен прогноз цепей Маркова. Сходимость: ${(markovAnalysis.convergence * 100).toFixed(1)}%`);
+            });
         }
         
         // Обработчики для кнопок паттернов
@@ -4159,9 +6273,17 @@
         // Инициализируем LSTM модель
         await initModel();
         
+        // Инициализируем цепи Маркова
+        initMarkovModel();
+        
         // Автоматическое обучение при наличии данных
         if (history.length >= 15) {
             setTimeout(trainModel, 1000);
+        }
+        
+        // Автоматическое обучение цепей Маркова
+        if (history.length >= 2) {
+            setTimeout(trainMarkovModel, 500);
         }
         
         // Инициализируем индикатор уверенности
@@ -4193,6 +6315,8 @@
         updatePredictionCharts();
         updatePatternsAnalysis();
         updateAIAnalysis();
+        updateMarkovAnalysis();
+        updateEnsembleAnalysis();
     });
 </script>
 </body>
