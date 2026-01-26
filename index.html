@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon14.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon21.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="URDS17">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,6 +36,9 @@
             --ai-color: #9C27B0;
             --markov-color: #FF5722;
             --ensemble-color: #9C27B0;
+            --cycle-color: #FF9800;
+            --cluster-color: #009688;
+            --awake-color: #673AB7;
         }
 
         .dark-mode {
@@ -60,6 +63,9 @@
             --ai-color: #BA68C8;
             --markov-color: #FF7043;
             --ensemble-color: #BA68C8;
+            --cycle-color: #FFB74D;
+            --cluster-color: #4DB6AC;
+            --awake-color: #9575CD;
         }
 
         * {
@@ -163,6 +169,15 @@
         .number.ensemble {
             background: var(--ensemble-color);
         }
+        .number.cycle {
+            background: var(--cycle-color);
+        }
+        .number.cluster {
+            background: var(--cluster-color);
+        }
+        .number.awake {
+            background: var(--awake-color);
+        }
         button {
             width: 100%;
             padding: 10px;
@@ -182,25 +197,6 @@
         button.secondary {
             background: var(--keyboard-bg);
             color: var(--text-color);
-        }
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 5px;
-            font-size: 13px;
-        }
-        .stats-table th, .stats-table td {
-            padding: 6px;
-            text-align: left;
-            border-bottom: 1px solid var(--history-border);
-        }
-        .hot {
-            color: var(--hot-color);
-            font-weight: bold;
-        }
-        .cold {
-            color: var(--cold-color);
-            font-weight: bold;
         }
         .history-item {
             padding: 8px 0;
@@ -324,17 +320,9 @@
         .tag-ai { background: var(--ai-color); color: white; }
         .tag-markov { background: var(--markov-color); color: white; }
         .tag-ensemble { background: var(--ensemble-color); color: white; }
-        .frequency-bar {
-            height: 5px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            margin-top: 3px;
-            overflow: hidden;
-        }
-        .frequency-fill {
-            height: 100%;
-            background: var(--primary-color);
-        }
+        .tag-cycle { background: var(--cycle-color); color: white; }
+        .tag-cluster { background: var(--cluster-color); color: white; }
+        .tag-awake { background: var(--awake-color); color: white; }
         .draw-inputs {
             display: flex;
             gap: 10px;
@@ -1422,6 +1410,359 @@
             content: "🏆";
             margin-right: 8px;
         }
+        
+        /* Новые стили для улучшенных функций */
+        .cycle-analysis {
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--cycle-color);
+        }
+        
+        .dark-mode .cycle-analysis {
+            background: rgba(255, 152, 0, 0.2);
+        }
+        
+        .cycle-title {
+            color: var(--cycle-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .cycle-title:before {
+            content: "🔄";
+            margin-right: 8px;
+        }
+        
+        .cluster-analysis {
+            background: rgba(0, 150, 136, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--cluster-color);
+        }
+        
+        .dark-mode .cluster-analysis {
+            background: rgba(0, 150, 136, 0.2);
+        }
+        
+        .cluster-title {
+            color: var(--cluster-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .cluster-title:before {
+            content: "🔗";
+            margin-right: 8px;
+        }
+        
+        .awake-analysis {
+            background: rgba(103, 58, 183, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--awake-color);
+        }
+        
+        .dark-mode .awake-analysis {
+            background: rgba(103, 58, 183, 0.2);
+        }
+        
+        .awake-title {
+            color: var(--awake-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .awake-title:before {
+            content: "🌅";
+            margin-right: 8px;
+        }
+        
+        .skip-recommendation {
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--lose-color);
+        }
+        
+        .dark-mode .skip-recommendation {
+            background: rgba(244, 67, 54, 0.2);
+        }
+        
+        .skip-title {
+            color: var(--lose-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .skip-title:before {
+            content: "⏸️";
+            margin-right: 8px;
+        }
+        
+        .cluster-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .cluster-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .cluster-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            background: var(--cluster-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .cycle-chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+        }
+        
+        .cycle-info {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .cycle-phase {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .phase-favorable {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .phase-neutral {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .phase-unfavorable {
+            background: #F44336;
+            color: white;
+        }
+        
+        .advanced-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .advanced-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .btn-cycle {
+            background: var(--cycle-color);
+            color: white;
+        }
+        
+        .btn-cluster {
+            background: var(--cluster-color);
+            color: white;
+        }
+        
+        .btn-awake {
+            background: var(--awake-color);
+            color: white;
+        }
+        
+        .advanced-analysis-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .analysis-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .analysis-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .analysis-label {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        .timing-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .timing-good {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .timing-average {
+            background: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid #FF9800;
+        }
+        
+        .timing-bad {
+            background: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid #F44336;
+        }
+        
+        .phase-diagram {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .phase-bar {
+            height: 100%;
+            width: 20%;
+            position: absolute;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .phase-current {
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            z-index: 2;
+        }
+        
+        /* Новый индикатор размера истории */
+        .history-size-indicator {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 102, 204, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dark-mode .history-size-indicator {
+            background: rgba(10, 132, 255, 0.1);
+        }
+        
+        .history-size-progress {
+            flex: 1;
+            height: 6px;
+            background: var(--keyboard-bg);
+            border-radius: 3px;
+            margin-right: 10px;
+            overflow: hidden;
+        }
+        
+        .history-size-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        /* Футер */
+        footer {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .copyright {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            word-break: break-word;
+        }
+        
+        .developer {
+            margin-top: 5px;
+            font-weight: bold;
+            color: var(--primary-color);
+            word-break: break-word;
+        }
+        
+        .year {
+            margin-top: 5px;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -1458,6 +1799,25 @@
                     Рекомендуемый метод: <strong id="recommendedMethod">Ансамбль</strong>
                     <span id="riskLevel" class="risk-indicator risk-medium">Средний риск</span>
                 </div>
+                <!-- Новый блок рекомендаций по времени -->
+                <div id="timingRecommendation" class="timing-indicator timing-average" style="display: none;">
+                    Рекомендация по времени: <strong id="timingText">Анализируем...</strong>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Индикатор размера истории -->
+        <div class="card" id="historySizeIndicator" style="display: none;">
+            <h2>📊 Размер базы данных</h2>
+            <div class="history-size-indicator">
+                <span>Тиражей в истории:</span>
+                <div class="history-size-progress">
+                    <div class="history-size-fill" id="historySizeFill" style="width: 0%"></div>
+                </div>
+                <span id="historySizeText">0/50</span>
+            </div>
+            <div class="info-box" style="margin-top: 10px; font-size: 12px;">
+                <strong>Автоматическое управление данными:</strong> При достижении 50 тиражей самый старый тираж автоматически удаляется при добавлении нового. Это обеспечивает оптимальную производительность и актуальность данных для обучения моделей.
             </div>
         </div>
         
@@ -1501,33 +1861,36 @@
                     <h3>3. Анализ статистики</h3>
                     <p>Используйте вкладки аналитики для изучения данных:</p>
                     <ul>
-                        <li><strong>Эффективность</strong> - ROI и процент выигрышей по методам</li>
                         <li><strong>Тепловая карта</strong> - совместная встречаемость чисел</li>
                         <li><strong>Прогнозы</strong> - предсказания LSTM модели и цепей Маркова</li>
                         <li><strong>Паттерны</strong> - логические последовательности и тренды</li>
                         <li><strong>ИИ Анализ</strong> - интеллектуальные рекомендации</li>
                         <li><strong>Цепи Маркова</strong> - стохастический анализ переходов</li>
+                        <li><strong>Ансамбль</strong> - комбинированный анализ всех методов</li>
+                        <li><strong>Расширенный анализ</strong> - цикличность, кластеры, просыпающиеся числа</li>
                     </ul>
                 </div>
                 
                 <div class="instruction-step">
-                    <h3>4. Обучение модели</h3>
+                    <h3>4. Новые улучшения</h3>
+                    <p>В этой версии добавлены следующие функции:</p>
+                    <ul>
+                        <li><strong>Автоматическое управление данными</strong> - поддержание оптимального размера базы (50 тиражей)</li>
+                        <li><strong>Анализ цикличности</strong> - обнаружение закономерностей в выигрышах</li>
+                        <li><strong>Усиленный анализ горячих/холодных чисел</strong> - выявление "просыпающихся" чисел</li>
+                        <li><strong>Улучшенный ансамбль-метод</strong> - интеллектуальное комбинирование предсказаний</li>
+                        <li><strong>Система "умного пропуска"</strong> - рекомендации, когда не стоит делать ставку</li>
+                        <li><strong>Анализ кластеров чисел</strong> - обнаружение групп чисел, которые выпадают вместе</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-step">
+                    <h3>5. Обучение модели</h3>
                     <p>Для работы LSTM модели и цепей Маркова нужно:</p>
                     <ul>
                         <li>Минимум 15 записей в истории</li>
                         <li>Нажмите "Обучить модель" для обучения LSTM</li>
                         <li>Цепи Маркова обучаются автоматически</li>
-                    </ul>
-                </div>
-                
-                <div class="instruction-step">
-                    <h3>5. Цепи Маркова</h3>
-                    <p>Новая система анализа, которая:</p>
-                    <ul>
-                        <li><strong>Анализирует переходы</strong> - как числа меняются от тиража к тиражу</li>
-                        <li><strong>Строит матрицу вероятностей</strong> - вероятность перехода от одного числа к другому</li>
-                        <li><strong>Предсказывает следующее состояние</strong> - на основе текущих чисел и вероятностей переходов</li>
-                        <li><strong>Определяет стационарное распределение</strong> - равновесное состояние системы</li>
                     </ul>
                 </div>
                 
@@ -1548,8 +1911,8 @@
                 </div>
                 
                 <div class="instruction-tip">
-                    <p><strong>💡 Совет:</strong> Для лучших результатов используйте Ансамбль-анализ, который комбинирует LSTM, цепи Маркова и другие методы. Анализ цепей Маркова работает лучше всего при наличии 20+ записей в истории.</p>
-                    <p><strong>⚠️ Важно:</strong> Генерируйте числа когда индикатор показывает "Высокая вероятность выигрыша" и цепь Маркова сходится к стационарному распределению.</p>
+                    <p><strong>💡 Совет:</strong> Для лучших результатов используйте Ансамбль-анализ, который комбинирует LSTM, цепи Маркова и другие методы. Обращайте внимание на индикатор "Рекомендация по времени" - он показывает наиболее благоприятные моменты для ставок.</p>
+                    <p><strong>⚠️ Важно:</strong> Система автоматически поддерживает базу данных в оптимальном размере (50 тиражей). При добавлении 51-го тиража самый старый автоматически удаляется. Это обеспечивает лучшую производительность и актуальность данных для прогнозов.</p>
                 </div>
             </div>
         </div>
@@ -1567,6 +1930,13 @@
                 <div class="method-btn" data-method="ai">ИИ Анализ</div>
                 <div class="method-btn" data-method="hybrid">Гибридный</div>
                 <div class="method-btn active" data-method="ensemble">Ансамбль</div>
+            </div>
+            
+            <!-- Расширенные элементы управления -->
+            <div class="advanced-controls">
+                <button class="advanced-btn btn-cycle" id="analyzeCyclesBtn">Анализ циклов</button>
+                <button class="advanced-btn btn-cluster" id="analyzeClustersBtn">Анализ кластеров</button>
+                <button class="advanced-btn btn-awake" id="analyzeAwakeBtn">Просыпающиеся числа</button>
             </div>
             
             <div id="trainingStatus" class="training-status">
@@ -1587,6 +1957,13 @@
             <div class="numbers" id="field2"></div>
             <button id="genBtn" class="smart-generate-btn">Умная генерация (Ансамбль)</button>
             <button id="genBtnBasic" class="secondary">Обычная генерация</button>
+            
+            <!-- Рекомендация пропуска -->
+            <div id="skipRecommendation" class="skip-recommendation" style="display: none;">
+                <div class="skip-title">Рекомендация системы</div>
+                <p id="skipReason">Анализируем условия...</p>
+                <button id="forceGenerateBtn" class="secondary">Все равно сгенерировать</button>
+            </div>
         </div>
         
         <div class="card">
@@ -1612,6 +1989,9 @@
                     <button class="quick-select-btn" data-action="cold1">Холодные</button>
                     <button class="quick-select-btn" data-action="patternFill1">По паттернам</button>
                     <button class="quick-select-btn" data-action="markovFill1">По Маркову</button>
+                    <button class="quick-select-btn" data-action="cycleFill1">По циклам</button>
+                    <button class="quick-select-btn" data-action="clusterFill1">По кластерам</button>
+                    <button class="quick-select-btn" data-action="awakeFill1">Просыпающиеся</button>
                     <button class="quick-select-btn auto-fill-btn" data-action="aiFill1">ИИ Заполнение</button>
                 </div>
                 
@@ -1636,6 +2016,7 @@
                     <button class="quick-select-btn" data-action="clear2">Очистить</button>
                     <button class="quick-select-btn" data-action="patternFill2">По паттернам</button>
                     <button class="quick-select-btn" data-action="markovFill2">По Маркову</button>
+                    <button class="quick-select-btn" data-action="cycleFill2">По циклам</button>
                     <button class="quick-select-btn auto-fill-btn" data-action="aiFill2">ИИ Заполнение</button>
                 </div>
                 
@@ -1655,11 +2036,6 @@
                 <button id="addHistoryBtn">Добавить результат</button>
                 <button id="clearAllBtn" class="secondary">Очистить все</button>
             </div>
-        </div>
-        
-        <div class="card">
-            <h2>Статистика чисел</h2>
-            <table class="stats-table" id="statsTable"></table>
         </div>
         
         <div class="card">
@@ -1705,23 +2081,16 @@
             <h2>Аналитика и визуализация</h2>
             
             <div class="tabs">
-                <div class="tab active" data-tab="efficiency">Эффективность</div>
-                <div class="tab" data-tab="heatmap">Тепловая карта</div>
+                <div class="tab active" data-tab="heatmap">Тепловая карта</div>
                 <div class="tab" data-tab="predictions">Прогнозы LSTM</div>
                 <div class="tab" data-tab="markovAnalysis">Цепи Маркова</div>
                 <div class="tab" data-tab="patterns">Анализ паттернов</div>
                 <div class="tab" data-tab="aiAnalysis">ИИ Анализ</div>
                 <div class="tab" data-tab="ensemble">Ансамбль</div>
+                <div class="tab" data-tab="advanced">Расширенный анализ</div>
             </div>
             
-            <div class="tab-content active" id="efficiencyTab">
-                <canvas id="efficiencyChart" class="chart-container"></canvas>
-                <div class="info-box">
-                    Этот график показывает эффективность каждого метода генерации чисел по соотношению выигрышей к потраченным средствам.
-                </div>
-            </div>
-            
-            <div class="tab-content" id="heatmapTab">
+            <div class="tab-content active" id="heatmapTab">
                 <div class="heatmap-container">
                     <div class="heatmap-grid" id="heatmapGrid"></div>
                 </div>
@@ -1910,6 +2279,106 @@
                     Методы с более быстрой сходимостью считаются более надежными.
                 </div>
             </div>
+            
+            <!-- Новая вкладка: Расширенный анализ -->
+            <div class="tab-content" id="advancedTab">
+                <div class="advanced-analysis-section">
+                    <h3>Расширенный анализ</h3>
+                    <p>Используйте дополнительные алгоритмы для улучшения предсказаний:</p>
+                    
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <div class="analysis-label">Цикличность выигрышей</div>
+                            <div class="analysis-value" id="cycleConfidence">0%</div>
+                            <div class="cycle-info" id="cycleInfo">Анализ не выполнен</div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="analysis-label">Кластеров обнаружено</div>
+                            <div class="analysis-value" id="clustersCount">0</div>
+                            <div class="cycle-info" id="clustersInfo">Кластеры не найдены</div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="analysis-label">Просыпающихся чисел</div>
+                            <div class="analysis-value" id="awakeCount">0</div>
+                            <div class="cycle-info" id="awakeInfo">Числа анализируются</div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="analysis-label">Фаза цикла</div>
+                            <div class="analysis-value" id="cyclePhase">-</div>
+                            <div id="cyclePhaseTag" class="cycle-phase phase-neutral">Не определена</div>
+                        </div>
+                    </div>
+                    
+                    <div class="phase-diagram" id="phaseDiagram">
+                        <!-- Диаграмма фаз будет здесь -->
+                    </div>
+                    
+                    <button id="runAdvancedAnalysisBtn" class="pattern-btn" style="margin-top: 15px;">Запустить расширенный анализ</button>
+                </div>
+                
+                <!-- Анализ цикличности -->
+                <div class="cycle-analysis" id="cycleAnalysisSection" style="display: none;">
+                    <div class="cycle-title">Анализ цикличности выигрышей</div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Наиболее частое расстояние между выигрышами:</span>
+                        <span class="stat-value" id="commonDistance">-</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Предсказанный следующий выигрышный тираж:</span>
+                        <span class="stat-value" id="nextWinPrediction">-</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Уверенность в цикличности:</span>
+                        <span class="stat-value" id="cycleAnalysisConfidence">0%</span>
+                    </div>
+                    <div class="cycle-chart-container">
+                        <canvas id="cycleChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Анализ кластеров -->
+                <div class="cluster-analysis" id="clusterAnalysisSection" style="display: none;">
+                    <div class="cluster-title">Анализ кластеров чисел</div>
+                    <div id="clustersList">
+                        <!-- Кластеры будут отображаться здесь -->
+                    </div>
+                    <div class="info-box">
+                        Кластеры - это группы чисел, которые часто выпадают вместе. Использование чисел из одного кластера может увеличить вероятность выигрыша.
+                    </div>
+                </div>
+                
+                <!-- Анализ просыпающихся чисел -->
+                <div class="awake-analysis" id="awakeAnalysisSection" style="display: none;">
+                    <div class="awake-title">Просыпающиеся числа</div>
+                    <p>Эти числа были "холодными" (редко выпадали), но начали появляться в последних тиражах:</p>
+                    <div class="pattern-numbers" id="awakeNumbersList">
+                        <!-- Просыпающиеся числа будут здесь -->
+                    </div>
+                    <div class="info-box">
+                        "Просыпающиеся" числа - это числа, которые долгое время редко выпадали, но начали появляться в последних тиражах. 
+                        Такие числа часто продолжают выпадать с повышенной частотой.
+                    </div>
+                </div>
+                
+                <!-- Система умного пропуска -->
+                <div class="skip-recommendation" id="skipAnalysisSection" style="display: none;">
+                    <div class="skip-title">Анализ оптимального времени для ставок</div>
+                    <p id="skipAnalysisText">Анализируем исторические данные...</p>
+                    <div class="pattern-stat">
+                        <span class="stat-key">Текущая рекомендация:</span>
+                        <span class="stat-value" id="currentRecommendation">Анализ...</span>
+                    </div>
+                    <div class="pattern-stat">
+                        <span class="stat-key">До следующего благоприятного периода:</span>
+                        <span class="stat-value" id="nextFavorablePeriod">-</span>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    Расширенный анализ использует сложные алгоритмы для выявления глубинных закономерностей в данных. 
+                    Эти алгоритмы могут обнаружить связи, невидимые при стандартном анализе.
+                </div>
+            </div>
         </div>
         
         <div class="card">
@@ -1918,8 +2387,16 @@
             <button id="clearHistoryBtn" class="secondary">Очистить историю</button>
         </div>
     </div>
-        
-    </div>
+
+<footer>
+        <div class="footer-content">
+            <p><strong>Улучшенный Рапидо Старт с LSTM и цепями Маркова</strong> - профессиональный инструмент для прогнозирования</p>
+            <div class="year">© 2026</div>
+            <div class="developer">Разработчик: Игорь Ефимов</div>
+            <div class="copyright">Все права защищены. Копирование программы запрещено.</div>
+        </div>
+    </footer>
+
 <script>
     // --- Тема ---
     const themeToggle = document.getElementById('themeToggle');
@@ -1943,6 +2420,8 @@
         updateMarkovAnalysis();
         updateEnsembleAnalysis();
         updateConfidenceIndicator();
+        updateAdvancedAnalysis();
+        updateHistorySizeIndicator();
     };
     applyTheme(localStorage.getItem('darkMode') === 'true');
 
@@ -1950,7 +2429,7 @@
     let history = JSON.parse(localStorage.getItem('rapidoHistory') || '[]');
     let bets = JSON.parse(localStorage.getItem('rapidoBets') || '[]');
     
-    // Статистика выигрышей - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // Статистика выигрышей
     let winStats = JSON.parse(localStorage.getItem('rapidoWinStats') || '{}');
     
     // Инициализация статистики, если она пустая
@@ -2024,6 +2503,120 @@
     // Сохраняем историю
     function saveHistory() {
         localStorage.setItem('rapidoHistory', JSON.stringify(history));
+    }
+
+    // --- НОВАЯ ФУНКЦИЯ: Автоматическое удаление старых записей ---
+    function manageHistorySize() {
+        const MAX_HISTORY_SIZE = 50; // Максимальное количество записей в истории
+        
+        if (history.length > MAX_HISTORY_SIZE) {
+            // Удаляем самые старые записи
+            const removedCount = history.length - MAX_HISTORY_SIZE;
+            const removedEntries = history.splice(0, removedCount);
+            
+            console.log(`Автоматически удалено ${removedCount} старых тиражей для поддержания оптимального размера базы данных.`);
+            
+            // Сохраняем изменения
+            saveHistory();
+            
+            // Обновляем статистику (вычитаем удаленные ставки)
+            removedEntries.forEach(entry => {
+                if (entry.betMethod && entry.winAmount && entry.winAmount > 0) {
+                    const method = entry.betMethod;
+                    if (winStats[method]) {
+                        winStats[method].wins--;
+                        winStats[method].won -= entry.winAmount;
+                        winStats[method].balance = winStats[method].won - winStats[method].spent;
+                        winStats[method].lastUpdate = new Date().toISOString();
+                    }
+                }
+            });
+            
+            saveWinStats();
+            
+            // Показываем уведомление пользователю
+            showNotification(`Автоматически удалено ${removedCount} старых тиражей для поддержания оптимальной производительности.`, 'info');
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Функция для показа уведомлений
+    function showNotification(message, type = 'info') {
+        // Создаем элемент уведомления
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'info' ? '#2196F3' : type === 'success' ? '#4CAF50' : '#f44336'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Удаляем уведомление через 5 секунд
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 5000);
+    }
+    
+    // Добавляем стили для анимации уведомлений
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // --- НОВАЯ ФУНКЦИЯ: Обновление индикатора размера истории ---
+    function updateHistorySizeIndicator() {
+        const indicator = document.getElementById('historySizeIndicator');
+        const fill = document.getElementById('historySizeFill');
+        const text = document.getElementById('historySizeText');
+        
+        if (!indicator || !fill || !text) return;
+        
+        const maxSize = 50;
+        const currentSize = history.length;
+        const percentage = Math.min(100, (currentSize / maxSize) * 100);
+        
+        // Показываем индикатор только если есть хоть одна запись
+        if (currentSize > 0) {
+            indicator.style.display = 'block';
+            fill.style.width = percentage + '%';
+            text.textContent = `${currentSize}/${maxSize}`;
+            
+            // Меняем цвет в зависимости от заполненности
+            if (currentSize >= maxSize) {
+                fill.style.backgroundColor = 'var(--lose-color)';
+            } else if (currentSize >= maxSize * 0.8) {
+                fill.style.backgroundColor = 'var(--hot-color)';
+            } else {
+                fill.style.backgroundColor = 'var(--win-color)';
+            }
+        } else {
+            indicator.style.display = 'none';
+        }
     }
 
     // --- Новая система ввода через матрицу чисел ---
@@ -2220,6 +2813,15 @@
                     case 'markovFill1':
                         fillByMarkovField1();
                         break;
+                    case 'cycleFill1':
+                        fillByCycleField1();
+                        break;
+                    case 'clusterFill1':
+                        fillByClusterField1();
+                        break;
+                    case 'awakeFill1':
+                        fillByAwakeField1();
+                        break;
                     case 'aiFill1':
                         fillByAIField1();
                         break;
@@ -2231,6 +2833,9 @@
                         break;
                     case 'markovFill2':
                         fillByMarkovField2();
+                        break;
+                    case 'cycleFill2':
+                        fillByCycleField2();
                         break;
                     case 'aiFill2':
                         fillByAIField2();
@@ -2349,6 +2954,164 @@
         
         selectedField2 = aiAnalysis.recommendation.field2;
         createField2Matrix();
+    }
+    
+    // Заполнение по анализу циклов для поля 1
+    function fillByCycleField1() {
+        const cycleAnalysis = analyzeCycles();
+        if (!cycleAnalysis) {
+            alert('Не удалось выполнить анализ цикличности. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Используем числа из предсказанных "удачных" тиражей
+        const predictedDraws = [];
+        let idx = cycleAnalysis.nextWinPrediction;
+        
+        while (idx < history.length) {
+            predictedDraws.push(history[idx]);
+            idx += cycleAnalysis.commonDistance;
+        }
+        
+        // Собираем наиболее частые числа из этих тиражей
+        const freq = Array(20).fill(0);
+        predictedDraws.forEach(draw => {
+            draw.field1.forEach(num => {
+                if (num >= 1 && num <= 20) freq[num-1]++;
+            });
+        });
+        
+        // Выбираем 8 самых частых чисел
+        const numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers.sort((a, b) => freq[b-1] - freq[a-1]);
+        
+        selectedField1 = new Set(numbers.slice(0, 8));
+        createField1Matrix();
+    }
+    
+    // Заполнение по анализу циклов для поля 2
+    function fillByCycleField2() {
+        const cycleAnalysis = analyzeCycles();
+        if (!cycleAnalysis) {
+            alert('Не удалось выполнить анализ цикличности. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Используем наиболее частое число из предсказанных "удачных" тиражей
+        const predictedDraws = [];
+        let idx = cycleAnalysis.nextWinPrediction;
+        
+        while (idx < history.length) {
+            predictedDraws.push(history[idx]);
+            idx += cycleAnalysis.commonDistance;
+        }
+        
+        const freq = Array(4).fill(0);
+        predictedDraws.forEach(draw => {
+            if (draw.field2 >= 1 && draw.field2 <= 4) {
+                freq[draw.field2-1]++;
+            }
+        });
+        
+        // Выбираем самое частое число
+        const maxFreq = Math.max(...freq);
+        const selectedNumber = freq.indexOf(maxFreq) + 1;
+        
+        selectedField2 = selectedNumber;
+        createField2Matrix();
+    }
+    
+    // Заполнение по кластерам для поля 1
+    function fillByClusterField1() {
+        const clusters = analyzeNumberClusters();
+        if (clusters.length === 0) {
+            alert('Не найдено кластеров для анализа. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Используем самый большой кластер
+        const biggestCluster = clusters.sort((a, b) => b.length - a.length)[0];
+        
+        // Если в кластере меньше 8 чисел, добавляем числа из других кластеров
+        let selectedNumbers = [...biggestCluster];
+        if (selectedNumbers.length < 8) {
+            const otherClusters = clusters.filter(c => c !== biggestCluster);
+            for (const cluster of otherClusters) {
+                for (const num of cluster) {
+                    if (!selectedNumbers.includes(num) && selectedNumbers.length < 8) {
+                        selectedNumbers.push(num);
+                    }
+                }
+                if (selectedNumbers.length >= 8) break;
+            }
+        }
+        
+        // Если все еще меньше 8 чисел, добавляем случайные
+        if (selectedNumbers.length < 8) {
+            const allNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            const availableNumbers = allNumbers.filter(n => !selectedNumbers.includes(n));
+            
+            while (selectedNumbers.length < 8 && availableNumbers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                selectedNumbers.push(availableNumbers.splice(randomIndex, 1)[0]);
+            }
+        }
+        
+        selectedField1 = new Set(selectedNumbers.slice(0, 8));
+        createField1Matrix();
+    }
+    
+    // Заполнение по просыпающимся числам для поля 1
+    function fillByAwakeField1() {
+        const awakeNumbers = enhancedHotColdAnalysis();
+        if (awakeNumbers.length === 0) {
+            alert('Не найдено просыпающихся чисел. Добавьте больше данных в историю.');
+            return;
+        }
+        
+        // Берем просыпающиеся числа и добавляем к ним случайные
+        let selectedNumbers = [...awakeNumbers];
+        
+        // Если просыпающихся чисел меньше 8, добавляем горячие числа
+        if (selectedNumbers.length < 8) {
+            const hotNumbers = getHotNumbers().slice(0, 8 - selectedNumbers.length);
+            for (const num of hotNumbers) {
+                if (!selectedNumbers.includes(num)) {
+                    selectedNumbers.push(num);
+                }
+            }
+        }
+        
+        // Если все еще меньше 8 чисел, добавляем случайные
+        if (selectedNumbers.length < 8) {
+            const allNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            const availableNumbers = allNumbers.filter(n => !selectedNumbers.includes(n));
+            
+            while (selectedNumbers.length < 8 && availableNumbers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                selectedNumbers.push(availableNumbers.splice(randomIndex, 1)[0]);
+            }
+        }
+        
+        selectedField1 = new Set(selectedNumbers.slice(0, 8));
+        createField1Matrix();
+    }
+    
+    // Получение горячих чисел
+    function getHotNumbers() {
+        if (history.length === 0) return [];
+        
+        const countField1 = Array(20).fill(0);
+        history.forEach(entry => {
+            entry.field1.forEach(n => {
+                if (n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+        });
+        
+        const numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers.sort((a, b) => countField1[b - 1] - countField1[a - 1]);
+        
+        return numbers.slice(0, 8);
     }
     
     // --- Анализ уверенности модели и серийностей ---
@@ -2575,11 +3338,310 @@
             riskLevelEl.className = "risk-indicator " + riskClass;
         }
         
+        // Обновляем рекомендацию по времени
+        const timingAnalysis = await shouldSkipGeneration();
+        const timingRecommendation = document.getElementById('timingRecommendation');
+        const timingText = document.getElementById('timingText');
+        
+        if (timingRecommendation && timingText) {
+            if (timingAnalysis.skip) {
+                timingRecommendation.style.display = 'block';
+                timingRecommendation.className = 'timing-indicator timing-bad';
+                timingText.textContent = "Рекомендуется пропустить ставку";
+            } else if (confidence > 0.6 && streakAnalysis.streakType === "hot") {
+                timingRecommendation.style.display = 'block';
+                timingRecommendation.className = 'timing-indicator timing-good';
+                timingText.textContent = "Благоприятное время для ставки";
+            } else if (confidence > 0.4) {
+                timingRecommendation.style.display = 'block';
+                timingRecommendation.className = 'timing-indicator timing-average';
+                timingText.textContent = "Нейтральное время для ставки";
+            } else {
+                timingRecommendation.style.display = 'block';
+                timingRecommendation.className = 'timing-indicator timing-bad';
+                timingText.textContent = "Неблагоприятное время для ставки";
+            }
+        }
+        
         return {
             confidence,
             streakAnalysis,
             recommendedMethod,
-            riskLevel
+            riskLevel,
+            timingAnalysis
+        };
+    }
+    
+    // --- НОВЫЕ ФУНКЦИИ: Улучшенный анализ ---
+    
+    // 1. Анализ цикличности выигрышей
+    function analyzeCycles() {
+        if (history.length < 15) return null;
+        
+        const winIndices = [];
+        history.forEach((entry, idx) => {
+            if (entry.winAmount > 0) winIndices.push(idx);
+        });
+        
+        // Если выигрышей меньше 3, недостаточно данных для анализа циклов
+        if (winIndices.length < 3) return null;
+        
+        // Анализ расстояний между выигрышами
+        const distances = [];
+        for (let i = 1; i < winIndices.length; i++) {
+            distances.push(winIndices[i] - winIndices[i-1]);
+        }
+        
+        // Поиск наиболее частого расстояния
+        const freq = {};
+        distances.forEach(d => freq[d] = (freq[d] || 0) + 1);
+        
+        let commonDistance = 7; // по умолчанию
+        let maxFreq = 0;
+        Object.keys(freq).forEach(d => {
+            if (freq[d] > maxFreq) {
+                maxFreq = freq[d];
+                commonDistance = parseInt(d);
+            }
+        });
+        
+        // Предсказание следующего выигрышного тиража
+        const lastWinIdx = winIndices[winIndices.length - 1];
+        const nextWinPrediction = lastWinIdx + commonDistance;
+        
+        // Рассчитываем уверенность
+        const confidence = maxFreq / distances.length;
+        
+        return {
+            commonDistance,
+            nextWinPrediction,
+            confidence,
+            winCount: winIndices.length,
+            distances: distances
+        };
+    }
+    
+    // 2. Усиленный анализ горячих/холодных чисел (просыпающиеся числа)
+    function enhancedHotColdAnalysis() {
+        if (history.length < 10) return [];
+        
+        const recentDraws = history.slice(-10);
+        const veryRecent = history.slice(-3);
+        
+        // Анализ "проснувшихся" чисел
+        const awakingNumbers = [];
+        
+        for (let i = 1; i <= 20; i++) {
+            let recentCount = 0;
+            let veryRecentCount = 0;
+            
+            recentDraws.forEach(draw => {
+                if (draw.field1.includes(i)) recentCount++;
+            });
+            
+            veryRecent.forEach(draw => {
+                if (draw.field1.includes(i)) veryRecentCount++;
+            });
+            
+            // Число, которое "просыпается" (было холодным, стало появляться)
+            if (recentCount <= 2 && veryRecentCount >= 1) {
+                awakingNumbers.push(i);
+            }
+        }
+        
+        return awakingNumbers;
+    }
+    
+    // 3. Анализ кластеров чисел
+    function analyzeNumberClusters() {
+        if (history.length < 10) return [];
+        
+        const clusters = [];
+        
+        // Анализируем последние 15 тиражей
+        const recent = history.slice(-15);
+        
+        // Находим пары чисел, которые часто выпадают вместе
+        const pairMatrix = Array(20).fill().map(() => Array(20).fill(0));
+        
+        recent.forEach(draw => {
+            const nums = draw.field1;
+            for (let i = 0; i < nums.length; i++) {
+                for (let j = i + 1; j < nums.length; j++) {
+                    pairMatrix[nums[i]-1][nums[j]-1]++;
+                    pairMatrix[nums[j]-1][nums[i]-1]++;
+                }
+            }
+        });
+        
+        // Формируем кластеры из часто встречающихся пар
+        const usedNumbers = new Set();
+        for (let i = 0; i < 20; i++) {
+            if (usedNumbers.has(i+1)) continue;
+            
+            const cluster = [i+1];
+            usedNumbers.add(i+1);
+            
+            // Ищем числа, которые часто выпадают с текущим
+            for (let j = 0; j < 20; j++) {
+                if (i !== j && !usedNumbers.has(j+1)) {
+                    if (pairMatrix[i][j] >= 3) { // Выпадали вместе минимум 3 раза
+                        cluster.push(j+1);
+                        usedNumbers.add(j+1);
+                    }
+                }
+            }
+            
+            if (cluster.length >= 3) {
+                clusters.push(cluster);
+            }
+        }
+        
+        return clusters;
+    }
+    
+    // 4. Улучшенный ансамбль-метод
+    function smartCombinePredictions(predictions) {
+        if (!predictions || predictions.length === 0) {
+            return generateRandomNumbers();
+        }
+        
+        // 1. Взвешивание методов на основе их недавней эффективности
+        const methodWeights = {};
+        const recentHistory = history.slice(-10);
+        
+        predictions.forEach(pred => {
+            const method = pred.method;
+            let recentWins = 0;
+            let recentBets = 0;
+            
+            recentHistory.forEach(entry => {
+                if (entry.betMethod === method) {
+                    recentBets++;
+                    if (entry.winAmount > 0) recentWins++;
+                }
+            });
+            
+            const recentWinRate = recentBets > 0 ? recentWins / recentBets : 0.5;
+            methodWeights[method] = pred.weight * (0.5 + recentWinRate * 0.5);
+        });
+        
+        // 2. Учет цикличности
+        const cycleAnalysis = analyzeCycles();
+        let cycleBonus = Array(20).fill(0);
+        
+        if (cycleAnalysis && cycleAnalysis.confidence > 0.6) {
+            // Увеличиваем вес чисел, которые выпадали в предсказанные "удачные" тиражи
+            const predictedDraws = [];
+            let idx = cycleAnalysis.nextWinPrediction;
+            
+            while (idx < history.length) {
+                predictedDraws.push(history[idx]);
+                idx += cycleAnalysis.commonDistance;
+            }
+            
+            predictedDraws.forEach(draw => {
+                draw.field1.forEach(num => {
+                    if (num >= 1 && num <= 20) {
+                        cycleBonus[num-1] += 0.1 * cycleAnalysis.confidence;
+                    }
+                });
+            });
+        }
+        
+        // 3. Комбинирование с учетом всего
+        const numberWeights = Array(20).fill(0);
+        
+        predictions.forEach((pred, idx) => {
+            const weight = methodWeights[pred.method];
+            pred.numbers.nums1.forEach(num => {
+                if (num >= 1 && num <= 20) {
+                    numberWeights[num-1] += weight;
+                }
+            });
+        });
+        
+        // Добавляем бонус за цикличность
+        for (let i = 0; i < 20; i++) {
+            numberWeights[i] += cycleBonus[i];
+        }
+        
+        // 4. Учет "просыпающихся" чисел
+        const awakingNumbers = enhancedHotColdAnalysis();
+        awakingNumbers.forEach(num => {
+            if (num >= 1 && num <= 20) {
+                numberWeights[num-1] *= 1.3; // Увеличиваем вес на 30%
+            }
+        });
+        
+        // 5. Учет кластеров
+        const clusters = analyzeNumberClusters();
+        if (clusters.length > 0) {
+            // Увеличиваем вес чисел, которые находятся в крупных кластерах
+            clusters.forEach(cluster => {
+                const clusterBonus = 0.1 * cluster.length;
+                cluster.forEach(num => {
+                    if (num >= 1 && num <= 20) {
+                        numberWeights[num-1] += clusterBonus;
+                    }
+                });
+            });
+        }
+        
+        // Выбор топ-8 чисел
+        const topNumbers = numberWeights
+            .map((weight, idx) => ({ number: idx + 1, weight }))
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 8)
+            .map(item => item.number)
+            .sort((a, b) => a - b);
+        
+        return topNumbers;
+    }
+    
+    // 5. Система "умного пропуска"
+    async function shouldSkipGeneration() {
+        if (history.length < 10) {
+            return {
+                skip: false,
+                reason: "Недостаточно данных для анализа"
+            };
+        }
+        
+        const confidence = await getModelConfidence();
+        const streakAnalysis = analyzeHotStreaks();
+        const cycleAnalysis = analyzeCycles();
+        
+        // Если низкая уверенность И холодная серия И не совпадает с циклом
+        if (confidence < 0.3 && 
+            streakAnalysis.streakType === "cold" &&
+            cycleAnalysis && 
+            Math.abs(history.length - cycleAnalysis.nextWinPrediction) > 2) {
+            return {
+                skip: true,
+                reason: "Неблагоприятные условия: низкая уверенность + холодная серия"
+            };
+        }
+        
+        // Если очень низкая уверенность (< 0.2)
+        if (confidence < 0.2) {
+            return {
+                skip: true,
+                reason: "Очень низкая уверенность модели"
+            };
+        }
+        
+        // Если длинная серия проигрышей (>5) и низкая уверенность
+        if (streakAnalysis.streakType === "lose" && streakAnalysis.streakLength > 5 && confidence < 0.4) {
+            return {
+                skip: true,
+                reason: "Длинная серия проигрышей и низкая уверенность"
+            };
+        }
+        
+        return { 
+            skip: false, 
+            reason: "Условия благоприятны для генерации" 
         };
     }
     
@@ -2591,6 +3653,37 @@
             return generateColdNumbers();
         }
         
+        // Проверяем, стоит ли генерировать
+        const skipAnalysis = await shouldSkipGeneration();
+        const skipRecommendation = document.getElementById('skipRecommendation');
+        const skipReason = document.getElementById('skipReason');
+        
+        if (skipAnalysis.skip && skipRecommendation && skipReason) {
+            skipRecommendation.style.display = 'block';
+            skipReason.textContent = skipAnalysis.reason;
+            
+            // Ждем решения пользователя
+            return new Promise((resolve) => {
+                const forceGenerateBtn = document.getElementById('forceGenerateBtn');
+                if (forceGenerateBtn) {
+                    forceGenerateBtn.onclick = () => {
+                        skipRecommendation.style.display = 'none';
+                        resolve(continueSmartGeneration());
+                    };
+                }
+                
+                // Также разрешаем если пользователь нажимает обычную кнопку генерации
+                setTimeout(() => {
+                    skipRecommendation.style.display = 'none';
+                    resolve(continueSmartGeneration());
+                }, 10000); // Через 10 секунд скрываем рекомендацию
+            });
+        }
+        
+        return continueSmartGeneration();
+    }
+    
+    async function continueSmartGeneration() {
         // Получаем анализ
         const analysis = await updateConfidenceIndicator();
         
@@ -2798,10 +3891,10 @@
         // Отображаем числа
         displayNumbers(generatedNumbers.nums1, generatedNumbers.num2, methodToUse);
         
-        // Увеличиваем счетчик ставки - ИСПРАВЛЕННАЯ ЛОГИКА
+        // Увеличиваем счетчик ставки
         if(winStats[methodToUse]) {
             winStats[methodToUse].bets++;
-            winStats[methodToUse].spent += 25; // Стоимость билета Рапидо (исправлено с 100 на 25)
+            winStats[methodToUse].spent += 25; // Стоимость билета Рапидо
             winStats[methodToUse].balance = winStats[methodToUse].won - winStats[methodToUse].spent;
             winStats[methodToUse].lastUpdate = new Date().toISOString();
             saveWinStats();
@@ -4679,10 +5772,27 @@
             return generateHybridNumbers();
         }
         
-        // Комбинируем предсказания
-        const combinedNumbers = combinePredictions(predictions);
+        // Комбинируем предсказания с использованием улучшенного метода
+        const combinedNumbers = smartCombinePredictions(predictions);
         
-        return combinedNumbers;
+        // Для поля 2 используем взвешенное голосование
+        const field2Weights = Array(4).fill(0);
+        
+        for (const pred of predictions) {
+            const num2 = pred.numbers.num2;
+            if (num2 >= 1 && num2 <= 4) {
+                field2Weights[num2 - 1] += pred.weight;
+            }
+        }
+        
+        // Выбираем число с наибольшим весом
+        const maxWeight = Math.max(...field2Weights);
+        const selectedField2 = field2Weights.indexOf(maxWeight) + 1;
+        
+        return {
+            nums1: combinedNumbers,
+            num2: selectedField2
+        };
     }
     
     // Получение веса метода на основе его эффективности
@@ -4700,47 +5810,6 @@
         
         // Минимальный вес 0.1, максимальный 2
         return Math.max(0.1, Math.min(2, weight * 2));
-    }
-    
-    // Комбинирование предсказаний
-    function combinePredictions(predictions) {
-        // Для поля 1: собираем все числа с их весами
-        const numberWeights = Array(20).fill(0);
-        
-        for (const pred of predictions) {
-            for (const num of pred.numbers.nums1) {
-                if (num >= 1 && num <= 20) {
-                    numberWeights[num - 1] += pred.weight;
-                }
-            }
-        }
-        
-        // Выбираем 8 чисел с наибольшим весом
-        const topNumbers = numberWeights
-            .map((weight, idx) => ({ number: idx + 1, weight }))
-            .sort((a, b) => b.weight - a.weight)
-            .slice(0, 8)
-            .map(item => item.number)
-            .sort((a, b) => a - b);
-        
-        // Для поля 2: взвешенное голосование
-        const field2Weights = Array(4).fill(0);
-        
-        for (const pred of predictions) {
-            const num2 = pred.numbers.num2;
-            if (num2 >= 1 && num2 <= 4) {
-                field2Weights[num2 - 1] += pred.weight;
-            }
-        }
-        
-        // Выбираем число с наибольшим весом
-        const maxWeight = Math.max(...field2Weights);
-        const selectedField2 = field2Weights.indexOf(maxWeight) + 1;
-        
-        return {
-            nums1: topNumbers,
-            num2: selectedField2
-        };
     }
     
     // Анализ ансамбля
@@ -4932,6 +6001,291 @@
         });
     }
     
+    // --- НОВЫЕ ФУНКЦИИ: Обновление расширенного анализа ---
+    
+    function updateAdvancedAnalysis() {
+        // Анализ цикличности
+        const cycleAnalysis = analyzeCycles();
+        const cycleConfidenceElement = document.getElementById('cycleConfidence');
+        const cycleInfoElement = document.getElementById('cycleInfo');
+        const cyclePhaseElement = document.getElementById('cyclePhase');
+        const cyclePhaseTagElement = document.getElementById('cyclePhaseTag');
+        
+        if (cycleConfidenceElement) {
+            if (cycleAnalysis) {
+                const confidencePercent = Math.round(cycleAnalysis.confidence * 100);
+                cycleConfidenceElement.textContent = `${confidencePercent}%`;
+                cycleInfoElement.textContent = `Наиболее частое расстояние: ${cycleAnalysis.commonDistance} тиражей`;
+                
+                // Определяем фазу цикла
+                const currentDraw = history.length;
+                const distanceToNextWin = cycleAnalysis.nextWinPrediction - currentDraw;
+                
+                let phase = "Не определена";
+                let phaseClass = "phase-neutral";
+                
+                if (distanceToNextWin <= 2) {
+                    phase = "Благоприятная";
+                    phaseClass = "phase-favorable";
+                } else if (distanceToNextWin <= 5) {
+                    phase = "Нейтральная";
+                    phaseClass = "phase-neutral";
+                } else {
+                    phase = "Неблагоприятная";
+                    phaseClass = "phase-unfavorable";
+                }
+                
+                if (cyclePhaseElement) cyclePhaseElement.textContent = phase;
+                if (cyclePhaseTagElement) {
+                    cyclePhaseTagElement.textContent = phase;
+                    cyclePhaseTagElement.className = `cycle-phase ${phaseClass}`;
+                }
+            } else {
+                cycleConfidenceElement.textContent = "0%";
+                cycleInfoElement.textContent = "Недостаточно данных для анализа";
+                if (cyclePhaseElement) cyclePhaseElement.textContent = "-";
+                if (cyclePhaseTagElement) {
+                    cyclePhaseTagElement.textContent = "Не определена";
+                    cyclePhaseTagElement.className = "cycle-phase phase-neutral";
+                }
+            }
+        }
+        
+        // Анализ кластеров
+        const clusters = analyzeNumberClusters();
+        const clustersCountElement = document.getElementById('clustersCount');
+        const clustersInfoElement = document.getElementById('clustersInfo');
+        
+        if (clustersCountElement) {
+            if (clusters.length > 0) {
+                clustersCountElement.textContent = clusters.length;
+                clustersInfoElement.textContent = `Найден ${clusters.length} кластер(ов) чисел`;
+            } else {
+                clustersCountElement.textContent = "0";
+                clustersInfoElement.textContent = "Кластеры не найдены";
+            }
+        }
+        
+        // Анализ просыпающихся чисел
+        const awakeNumbers = enhancedHotColdAnalysis();
+        const awakeCountElement = document.getElementById('awakeCount');
+        const awakeInfoElement = document.getElementById('awakeInfo');
+        
+        if (awakeCountElement) {
+            if (awakeNumbers.length > 0) {
+                awakeCountElement.textContent = awakeNumbers.length;
+                awakeInfoElement.textContent = `${awakeNumbers.length} чисел "просыпается"`;
+            } else {
+                awakeCountElement.textContent = "0";
+                awakeInfoElement.textContent = "Просыпающихся чисел не найдено";
+            }
+        }
+        
+        // Обновляем диаграмму фаз
+        updatePhaseDiagram(cycleAnalysis);
+    }
+    
+    function updatePhaseDiagram(cycleAnalysis) {
+        const phaseDiagram = document.getElementById('phaseDiagram');
+        if (!phaseDiagram) return;
+        
+        phaseDiagram.innerHTML = '';
+        
+        if (!cycleAnalysis) {
+            phaseDiagram.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-color); opacity: 0.5;">Нет данных для диаграммы</div>';
+            return;
+        }
+        
+        const currentDraw = history.length;
+        const distanceToNextWin = cycleAnalysis.nextWinPrediction - currentDraw;
+        
+        // Определяем фазы
+        const phases = [
+            { name: "Неблагоприятная", width: 40, color: "#F44336", current: distanceToNextWin > 5 },
+            { name: "Нейтральная", width: 30, color: "#FF9800", current: distanceToNextWin > 2 && distanceToNextWin <= 5 },
+            { name: "Благоприятная", width: 30, color: "#4CAF50", current: distanceToNextWin <= 2 }
+        ];
+        
+        let leftPosition = 0;
+        phases.forEach((phase, index) => {
+            const phaseBar = document.createElement('div');
+            phaseBar.className = 'phase-bar';
+            phaseBar.style.width = `${phase.width}%`;
+            phaseBar.style.left = `${leftPosition}%`;
+            phaseBar.style.backgroundColor = phase.color;
+            phaseBar.textContent = phase.name;
+            
+            if (phase.current) {
+                phaseBar.classList.add('phase-current');
+            }
+            
+            phaseDiagram.appendChild(phaseBar);
+            leftPosition += phase.width;
+        });
+    }
+    
+    function runAdvancedAnalysis() {
+        // Анализ цикличности
+        const cycleAnalysis = analyzeCycles();
+        const cycleAnalysisSection = document.getElementById('cycleAnalysisSection');
+        const commonDistanceElement = document.getElementById('commonDistance');
+        const nextWinPredictionElement = document.getElementById('nextWinPrediction');
+        const cycleAnalysisConfidenceElement = document.getElementById('cycleAnalysisConfidence');
+        
+        if (cycleAnalysis && cycleAnalysisSection) {
+            cycleAnalysisSection.style.display = 'block';
+            
+            if (commonDistanceElement) {
+                commonDistanceElement.textContent = cycleAnalysis.commonDistance;
+            }
+            
+            if (nextWinPredictionElement) {
+                nextWinPredictionElement.textContent = cycleAnalysis.nextWinPrediction;
+            }
+            
+            if (cycleAnalysisConfidenceElement) {
+                cycleAnalysisConfidenceElement.textContent = `${Math.round(cycleAnalysis.confidence * 100)}%`;
+            }
+            
+            // Обновляем график цикличности
+            updateCycleChart(cycleAnalysis);
+        } else if (cycleAnalysisSection) {
+            cycleAnalysisSection.style.display = 'none';
+        }
+        
+        // Анализ кластеров
+        const clusters = analyzeNumberClusters();
+        const clusterAnalysisSection = document.getElementById('clusterAnalysisSection');
+        const clustersListElement = document.getElementById('clustersList');
+        
+        if (clusters.length > 0 && clusterAnalysisSection && clustersListElement) {
+            clusterAnalysisSection.style.display = 'block';
+            
+            clustersListElement.innerHTML = '';
+            clusters.forEach((cluster, index) => {
+                const clusterItem = document.createElement('div');
+                clusterItem.className = 'cluster-item';
+                
+                clusterItem.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">Кластер ${index + 1} (${cluster.length} чисел)</div>
+                    <div class="cluster-numbers">
+                        ${cluster.map(num => `<div class="cluster-number">${num}</div>`).join('')}
+                    </div>
+                `;
+                
+                clustersListElement.appendChild(clusterItem);
+            });
+        } else if (clusterAnalysisSection) {
+            clusterAnalysisSection.style.display = 'none';
+        }
+        
+        // Анализ просыпающихся чисел
+        const awakeNumbers = enhancedHotColdAnalysis();
+        const awakeAnalysisSection = document.getElementById('awakeAnalysisSection');
+        const awakeNumbersListElement = document.getElementById('awakeNumbersList');
+        
+        if (awakeNumbers.length > 0 && awakeAnalysisSection && awakeNumbersListElement) {
+            awakeAnalysisSection.style.display = 'block';
+            
+            awakeNumbersListElement.innerHTML = '';
+            awakeNumbers.forEach(num => {
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'pattern-number';
+                numberDiv.textContent = num;
+                awakeNumbersListElement.appendChild(numberDiv);
+            });
+        } else if (awakeAnalysisSection) {
+            awakeAnalysisSection.style.display = 'none';
+        }
+        
+        // Анализ пропуска
+        const skipAnalysisSection = document.getElementById('skipAnalysisSection');
+        const skipAnalysisTextElement = document.getElementById('skipAnalysisText');
+        const currentRecommendationElement = document.getElementById('currentRecommendation');
+        const nextFavorablePeriodElement = document.getElementById('nextFavorablePeriod');
+        
+        if (skipAnalysisSection && skipAnalysisTextElement && currentRecommendationElement && nextFavorablePeriodElement) {
+            skipAnalysisSection.style.display = 'block';
+            
+            shouldSkipGeneration().then(skipAnalysis => {
+                skipAnalysisTextElement.textContent = skipAnalysis.reason;
+                currentRecommendationElement.textContent = skipAnalysis.skip ? "Пропустить ставку" : "Можно делать ставку";
+                
+                // Рассчитываем следующее благоприятное время
+                if (cycleAnalysis) {
+                    const distanceToNextWin = cycleAnalysis.nextWinPrediction - history.length;
+                    if (distanceToNextWin > 0) {
+                        nextFavorablePeriodElement.textContent = `через ${distanceToNextWin} тираж(ей)`;
+                    } else {
+                        nextFavorablePeriodElement.textContent = "в следующем тираже";
+                    }
+                } else {
+                    nextFavorablePeriodElement.textContent = "не определено";
+                }
+            });
+        }
+        
+        // Обновляем общую статистику
+        updateAdvancedAnalysis();
+        
+        alert("Расширенный анализ выполнен!");
+    }
+    
+    function updateCycleChart(cycleAnalysis) {
+        const canvas = document.getElementById('cycleChart');
+        if (!canvas || !cycleAnalysis) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Если уже есть график, уничтожаем его
+        if (window.cycleChartInstance) {
+            window.cycleChartInstance.destroy();
+        }
+        
+        // Создаем данные для графика
+        const distances = cycleAnalysis.distances;
+        const freq = {};
+        distances.forEach(d => {
+            freq[d] = (freq[d] || 0) + 1;
+        });
+        
+        const labels = Object.keys(freq).sort((a, b) => a - b);
+        const data = labels.map(d => freq[d]);
+        
+        window.cycleChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Частота расстояний между выигрышами',
+                    data: data,
+                    backgroundColor: 'rgba(255, 152, 0, 0.6)',
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Частота'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Расстояние между выигрышами (тиражи)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
     // --- Отображение истории ---
     const historyList = document.getElementById('historyList');
     function renderHistory() {
@@ -4957,6 +6311,9 @@
                     case 'patterns': tagClass = 'tag-pattern'; tagText = 'ПТ'; break;
                     case 'ai': tagClass = 'tag-ai'; tagText = 'ИИ'; break;
                     case 'ensemble': tagClass = 'tag-ensemble'; tagText = 'АН'; break;
+                    case 'cycle': tagClass = 'tag-cycle'; tagText = 'ЦК'; break;
+                    case 'cluster': tagClass = 'tag-cluster'; tagText = 'КЛ'; break;
+                    case 'awake': tagClass = 'tag-awake'; tagText = 'ПР'; break;
                 }
                 methodTag = `<span class="method-tag ${tagClass}">${tagText}</span>`;
             }
@@ -4983,9 +6340,12 @@
         if (modelDataSize) {
             modelDataSize.textContent = history.length;
         }
+        
+        // Обновляем индикатор размера истории
+        updateHistorySizeIndicator();
     }
     
-    // Удаление записи истории - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // Удаление записи истории
     if (historyList) {
         historyList.addEventListener('click', e => {
             if(e.target.tagName === 'BUTTON') {
@@ -5007,7 +6367,6 @@
                 history.splice(idx, 1);
                 saveHistory();
                 renderHistory();
-                updateStats();
                 updateWinStats(); // Обновляем статистику выигрышей
                 updateCharts();
                 renderHeatmap();
@@ -5017,25 +6376,36 @@
                 updateMarkovAnalysis();
                 updateEnsembleAnalysis();
                 updateConfidenceIndicator();
+                updateAdvancedAnalysis();
+                updateHistorySizeIndicator();
             }
         });
     }
     
-    // Очистка истории - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // Очистка истории
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     if (clearHistoryBtn) {
         clearHistoryBtn.onclick = () => {
             if(confirm('Очистить всю историю, ставки и статистику?')) {
                 history = [];
                 bets = [];
+                winStats = {};
+                
+                // Переинициализируем статистику
+                initWinStats();
+                
+                // Очищаем localStorage
                 saveHistory();
                 saveBets();
+                saveWinStats();
                 
-                // Сбрасываем статистику
-                initWinStats(); // Эта функция переинициализирует статистику
+                // Очищаем модель LSTM
+                localStorage.removeItem('lstmModelInfo');
+                
+                // Очищаем модель Маркова
+                localStorage.removeItem('markovModel');
                 
                 renderHistory();
-                updateStats();
                 updateWinStats();
                 updateCharts();
                 renderHeatmap();
@@ -5045,6 +6415,10 @@
                 updateMarkovAnalysis();
                 updateEnsembleAnalysis();
                 updateConfidenceIndicator();
+                updateAdvancedAnalysis();
+                updateHistorySizeIndicator();
+                
+                alert("Вся история, ставки и статистика очищены!");
             }
         };
     }
@@ -5124,7 +6498,7 @@
         return { drawId, nums1, num2 };
     }
 
-    // --- Добавление в историю - ИСПРАВЛЕННАЯ ВЕРСИЯ ---
+    // --- Добавление в историю ---
     const addHistoryBtn = document.getElementById('addHistoryBtn');
     if (addHistoryBtn) {
         addHistoryBtn.onclick = () => {
@@ -5159,7 +6533,7 @@
                     result.winType = prize.label;
                     result.betMethod = bet.method;
                     
-                    // Обновляем статистику - ИСПРАВЛЕННАЯ ЛОГИКА
+                    // Обновляем статистику
                     if (winStats[bet.method]) {
                         winStats[bet.method].wins++;
                         winStats[bet.method].won += prize.amount;
@@ -5184,8 +6558,10 @@
             // Очищаем поля ввода
             clearAllFields();
             
+            // Проверяем и управляем размером истории
+            const removedEntries = manageHistorySize();
+            
             renderHistory();
-            updateStats();
             updateWinStats(); // Обновляем статистику выигрышей
             updateCharts();
             renderHeatmap();
@@ -5195,6 +6571,7 @@
             updateMarkovAnalysis();
             updateEnsembleAnalysis();
             updateConfidenceIndicator();
+            updateAdvancedAnalysis();
             
             // Онлайн-обучение модели при наличии новых данных
             if (history.length >= 15 && lstmModel) {
@@ -5207,53 +6584,8 @@
             }
         };
     }
-
-    // --- Статистика чисел ---
-    const statsTable = document.getElementById('statsTable');
-
-    function updateStats() {
-        if (!statsTable) return;
-        
-        // Считаем частоты для обоих полей
-        const countField1 = Array(20).fill(0);
-        const countField2 = Array(4).fill(0);
-
-        history.forEach(entry => {
-            entry.field1.forEach(n => {
-                if(n >= 1 && n <= 20) countField1[n - 1]++;
-            });
-            if(entry.field2 >= 1 && entry.field2 <= 4) countField2[entry.field2 - 1]++;
-        });
-
-        // Находим максимальную частоту для нормализации
-        const maxCount1 = Math.max(...countField1) || 1;
-        const maxCount2 = Math.max(...countField2) || 1;
-
-        let html = '<tr><th>Число (8 из 20)</th><th>Частота</th><th>График</th><th>Число (1 из 4)</th><th>Частота</th><th>График</th></tr>';
-
-        for(let i = 0; i < 20; i++) {
-            const freq1 = countField1[i] || 0;
-            const freqPercent1 = maxCount1 ? Math.round((freq1 / maxCount1) * 100) : 0;
-            
-            const freq2 = (i < 4) ? countField2[i] || 0 : 0;
-            const freqPercent2 = (i < 4 && maxCount2) ? Math.round((freq2 / maxCount2) * 100) : 0;
-            
-            const hotColdClass1 = freq1 > (history.length / 2) ? 'hot' : 'cold';
-            const hotColdClass2 = (i < 4 && freq2 > (history.length / 4)) ? 'hot' : 'cold';
-            
-            html += `<tr>
-                <td>${i + 1}</td>
-                <td class="${hotColdClass1}">${freq1}</td>
-                <td><div class="frequency-bar"><div class="frequency-fill" style="width: ${freqPercent1}%"></div></div></td>
-                <td>${i < 4 ? i + 1 : ''}</td>
-                <td>${i < 4 ? `<span class="${hotColdClass2}">${freq2}</span>` : ''}</td>
-                <td>${i < 4 ? `<div class="frequency-bar"><div class="frequency-fill" style="width: ${freqPercent2}%"></div></div>` : ''}</td>
-            </tr>`;
-        }
-        statsTable.innerHTML = html;
-    }
     
-    // --- СТАТИСТИКА ВЫИГРЫШЕЙ - ИСПРАВЛЕННАЯ И УЛУЧШЕННАЯ ВЕРСИЯ ---
+    // --- СТАТИСТИКА ВЫИГРЫШЕЙ ---
     
     // Обновление статистики выигрышей
     function updateWinStats() {
@@ -5602,6 +6934,12 @@
                 div.classList.add('ai');
             } else if (method === 'ensemble') {
                 div.classList.add('ensemble');
+            } else if (method === 'cycle') {
+                div.classList.add('cycle');
+            } else if (method === 'cluster') {
+                div.classList.add('cluster');
+            } else if (method === 'awake') {
+                div.classList.add('awake');
             } else if(method === 'karnaugh' && nums1.indexOf(n) < 5) {
                 div.classList.add('special');
             } else if(method === 'uniform') {
@@ -5625,6 +6963,12 @@
             div2.classList.add('ai');
         } else if (method === 'ensemble') {
             div2.classList.add('ensemble');
+        } else if (method === 'cycle') {
+            div2.classList.add('cycle');
+        } else if (method === 'cluster') {
+            div2.classList.add('cluster');
+        } else if (method === 'awake') {
+            div2.classList.add('awake');
         } else if(method === 'ogneva' || method === 'uniform') {
             div2.classList.add('special');
         }
@@ -5712,82 +7056,10 @@
     
     // Обновление графиков
     function updateCharts() {
-        // График эффективности методов
-        const efficiencyChartCanvas = document.getElementById('efficiencyChart');
-        if (!efficiencyChartCanvas) return;
+        // График эффективности методов - УДАЛЕН
         
-        const ctx = efficiencyChartCanvas.getContext('2d');
-        
-        // Если уже есть график, уничтожаем его
-        if (window.efficiencyChartInstance) {
-            window.efficiencyChartInstance.destroy();
-        }
-        
-        const methods = ['cold', 'ogneva', 'karnaugh', 'uniform', 'lstm', 'markov', 'hybrid', 'patterns', 'ai', 'ensemble'];
-        const methodNames = {
-            cold: 'Холодные',
-            ogneva: 'Огнева',
-            karnaugh: 'Карнауха',
-            uniform: 'Равномерный',
-            lstm: 'LSTM',
-            markov: 'Марков',
-            hybrid: 'Гибридный',
-            patterns: 'Паттерны',
-            ai: 'ИИ Анализ',
-            ensemble: 'Ансамбль'
-        };
-        
-        const winRates = methods.map(method => {
-            const stats = winStats[method];
-            return stats.bets > 0 ? (stats.wins / stats.bets) * 100 : 0;
-        });
-        
-        const roiValues = methods.map(method => {
-            const stats = winStats[method];
-            return stats.spent > 0 ? (stats.won / stats.spent) * 100 : 0;
-        });
-        
-        window.efficiencyChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: methods.map(m => methodNames[m]),
-                datasets: [
-                    {
-                        label: 'Процент выигрышей (%)',
-                        data: winRates,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'ROI (%)',
-                        data: roiValues,
-                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Процент'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                }
-            }
-        });
+        // Обновляем только график статистики выигрышей
+        updateWinStatsChart();
     }
     
     // Обновление графиков прогнозов
@@ -6032,7 +7304,7 @@
         patternsList.innerHTML = '';
         
         if (patterns.length === 0) {
-            patternsList.innerHTML = '<div class="pattern-item"><div class="pattern-name">Паттерны не найдены</div><div class="pattern-description">Добавьте больше данных в историю для анализа паттернов.</div></div>';
+            patternsList.innerHTML = '<div class="pattern-item"><div class="pattern-name">Паттерны не найдены</div><div class="pattern-description">Добавьте больше данных в истории для анализа паттернов.</div></div>';
             return;
         }
         
@@ -6150,9 +7422,6 @@
             
             // Обновляем данные на вкладке
             switch(tabId) {
-                case 'efficiency':
-                    updateCharts();
-                    break;
                 case 'heatmap':
                     renderHeatmap();
                     break;
@@ -6171,6 +7440,9 @@
                 case 'ensemble':
                     updateEnsembleAnalysis();
                     break;
+                case 'advanced':
+                    updateAdvancedAnalysis();
+                    break;
             }
         });
     });
@@ -6182,6 +7454,11 @@
         const trainMarkovBtn = document.getElementById('trainMarkovBtn');
         const updateMarkovBtn = document.getElementById('updateMarkovBtn');
         const applyMarkovBtn = document.getElementById('applyMarkovBtn');
+        const runAdvancedAnalysisBtn = document.getElementById('runAdvancedAnalysisBtn');
+        const analyzeCyclesBtn = document.getElementById('analyzeCyclesBtn');
+        const analyzeClustersBtn = document.getElementById('analyzeClustersBtn');
+        const analyzeAwakeBtn = document.getElementById('analyzeAwakeBtn');
+        const forceGenerateBtn = document.getElementById('forceGenerateBtn');
         
         if (genBtn) {
             genBtn.addEventListener('click', generateNumbers);
@@ -6263,7 +7540,55 @@
             });
         }
         
-        updateStats();
+        // Обработчики для расширенного анализа
+        if (runAdvancedAnalysisBtn) {
+            runAdvancedAnalysisBtn.addEventListener('click', runAdvancedAnalysis);
+        }
+        
+        if (analyzeCyclesBtn) {
+            analyzeCyclesBtn.addEventListener('click', () => {
+                const cycleAnalysis = analyzeCycles();
+                if (cycleAnalysis) {
+                    alert(`Анализ цикличности:\nНаиболее частое расстояние между выигрышами: ${cycleAnalysis.commonDistance} тиражей\nПредсказанный следующий выигрышный тираж: ${cycleAnalysis.nextWinPrediction}\nУверенность: ${Math.round(cycleAnalysis.confidence * 100)}%`);
+                } else {
+                    alert('Недостаточно данных для анализа цикличности. Нужно минимум 15 тиражей и 3 выигрыша.');
+                }
+            });
+        }
+        
+        if (analyzeClustersBtn) {
+            analyzeClustersBtn.addEventListener('click', () => {
+                const clusters = analyzeNumberClusters();
+                if (clusters.length > 0) {
+                    alert(`Найдено ${clusters.length} кластеров чисел. Перейдите на вкладку "Расширенный анализ" для просмотра деталей.`);
+                } else {
+                    alert('Кластеры не найдены. Добавьте больше данных в историю.');
+                }
+            });
+        }
+        
+        if (analyzeAwakeBtn) {
+            analyzeAwakeBtn.addEventListener('click', () => {
+                const awakeNumbers = enhancedHotColdAnalysis();
+                if (awakeNumbers.length > 0) {
+                    alert(`Найдено ${awakeNumbers.length} "просыпающихся" чисел: ${awakeNumbers.join(', ')}`);
+                } else {
+                    alert('Просыпающихся чисел не найдено. Добавьте больше данных в историю.');
+                }
+            });
+        }
+        
+        if (forceGenerateBtn) {
+            forceGenerateBtn.addEventListener('click', () => {
+                const skipRecommendation = document.getElementById('skipRecommendation');
+                if (skipRecommendation) {
+                    skipRecommendation.style.display = 'none';
+                }
+                // Генерируем числа
+                generateNumbers();
+            });
+        }
+        
         updateWinStats();
         renderHistory();
         
@@ -6288,6 +7613,9 @@
         
         // Инициализируем индикатор уверенности
         updateConfidenceIndicator();
+        
+        // Обновляем индикатор размера истории
+        updateHistorySizeIndicator();
         
         // Обновляем индикатор каждые 30 секунд
         setInterval(updateConfidenceIndicator, 30000);
@@ -6317,6 +7645,7 @@
         updateAIAnalysis();
         updateMarkovAnalysis();
         updateEnsembleAnalysis();
+        updateAdvancedAnalysis();
     });
 </script>
 </body>
